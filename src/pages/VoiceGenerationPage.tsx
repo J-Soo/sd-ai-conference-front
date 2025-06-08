@@ -459,7 +459,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                           }`}
                           title={`선택된 ${selectedScriptIds.size}개 삭제`}
                         >
-                          {isDeleting ? <Loader2 className="animate-spin\" size={16} /> : <Trash2 size={16} />}
+                          {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                         </button>
                       )}
                       
@@ -585,13 +585,13 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
                                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                               : darkMode
-                                ? 'bg-red-600 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100 focus:opacity-100'
-                                : 'bg-red-600 hover:bg-red-700 text-white opacity-0 group-hover:opacity-100 focus:opacity-100'
+                                ? 'bg-gray-600 text-gray-400 hover:bg-red-600 hover:text-white'
+                                : 'bg-gray-200 text-gray-500 hover:bg-red-600 hover:text-white'
                           }`}
                           title="대본 삭제"
                         >
                           {isDeleting && deletingScriptId === script.id ? 
-                            <Loader2 className="animate-spin\" size={14} /> : 
+                            <Loader2 className="animate-spin" size={14} /> : 
                             <Trash2 size={14} />
                           }
                         </button>
@@ -656,7 +656,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="animate-spin\" size={18} />
+                      <Loader2 className="animate-spin" size={18} />
                       <span>음성 생성 중...</span>
                     </>
                   ) : (
@@ -742,7 +742,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
@@ -791,7 +791,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
