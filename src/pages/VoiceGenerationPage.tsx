@@ -27,6 +27,8 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [selectedScriptIds, setSelectedScriptIds] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showSingleDeleteConfirm, setShowSingleDeleteConfirm] = useState(false);
+  const [scriptToDelete, setScriptToDelete] = useState<Script | null>(null);
   const [deletingScriptId, setDeletingScriptId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -112,21 +114,29 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
     }
   };
 
-  // 개별 대본 삭제
-  const handleDeleteScript = async (scriptId: string) => {
+  // 개별 삭제 확인 모달 표시
+  const showDeleteConfirmation = (script: Script) => {
+    setScriptToDelete(script);
+    setShowSingleDeleteConfirm(true);
+  };
+
+  // 개별 대본 삭제 실행
+  const handleDeleteScript = async () => {
+    if (!scriptToDelete) return;
+
     setIsDeleting(true);
-    setDeletingScriptId(scriptId);
+    setDeletingScriptId(scriptToDelete.id);
 
     try {
       if (serverConnected) {
         try {
-          await axios.delete(`http://localhost:8000/api/v1/generation/scripts/${scriptId}`);
+          await axios.delete(`http://localhost:8000/api/v1/generation/scripts/${scriptToDelete.id}`);
           
           // 성공적으로 삭제된 경우 로컬 상태 업데이트
-          setScripts(prev => prev.filter(script => script.id !== scriptId));
+          setScripts(prev => prev.filter(script => script.id !== scriptToDelete.id));
           
           // 삭제된 스크립트가 현재 선택된 스크립트인 경우 선택 해제
-          if (selectedScript?.id === scriptId) {
+          if (selectedScript?.id === scriptToDelete.id) {
             setSelectedScript(null);
             setAudioGeneration(null);
           }
@@ -138,8 +148,8 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
             setError('삭제 API가 아직 구현되지 않았습니다.');
             
             // API가 구현되지 않은 경우에만 임시로 로컬에서 삭제 (개발 편의를 위해)
-            setScripts(prev => prev.filter(script => script.id !== scriptId));
-            if (selectedScript?.id === scriptId) {
+            setScripts(prev => prev.filter(script => script.id !== scriptToDelete.id));
+            if (selectedScript?.id === scriptToDelete.id) {
               setSelectedScript(null);
               setAudioGeneration(null);
             }
@@ -150,9 +160,9 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
       } else {
         // 테스트 모드: 로컬에서 삭제 시뮬레이션
         await new Promise(resolve => setTimeout(resolve, 500));
-        setScripts(prev => prev.filter(script => script.id !== scriptId));
+        setScripts(prev => prev.filter(script => script.id !== scriptToDelete.id));
         
-        if (selectedScript?.id === scriptId) {
+        if (selectedScript?.id === scriptToDelete.id) {
           setSelectedScript(null);
           setAudioGeneration(null);
         }
@@ -163,6 +173,8 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
     } finally {
       setIsDeleting(false);
       setDeletingScriptId(null);
+      setShowSingleDeleteConfirm(false);
+      setScriptToDelete(null);
     }
   };
 
@@ -447,7 +459,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                           }`}
                           title={`선택된 ${selectedScriptIds.size}개 삭제`}
                         >
-                          {isDeleting ? <Loader2 className="animate-spin\" size={16} /> : <Trash2 size={16} />}
+                          {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                         </button>
                       )}
                       
@@ -503,7 +515,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                 {scripts.map((script) => (
                   <div
                     key={script.id}
-                    className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                    className={`group p-4 rounded-lg border-2 transition-all duration-200 ${
                       selectedScript?.id === script.id && !isMultiSelectMode
                         ? darkMode 
                           ? 'border-blue-500 bg-blue-900/20' 
@@ -564,22 +576,22 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteScript(script.id);
+                            showDeleteConfirmation(script);
                           }}
                           disabled={isDeleting && deletingScriptId === script.id}
-                          className={`p-1.5 rounded-md transition-colors duration-200 ${
+                          className={`ml-2 p-1.5 rounded-md transition-all duration-200 ${
                             isDeleting && deletingScriptId === script.id
                               ? darkMode 
                                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
                                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                               : darkMode
-                                ? 'bg-red-600 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100'
-                                : 'bg-red-600 hover:bg-red-700 text-white opacity-0 group-hover:opacity-100'
+                                ? 'bg-red-600 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100 focus:opacity-100'
+                                : 'bg-red-600 hover:bg-red-700 text-white opacity-0 group-hover:opacity-100 focus:opacity-100'
                           }`}
                           title="대본 삭제"
                         >
                           {isDeleting && deletingScriptId === script.id ? 
-                            <Loader2 className="animate-spin\" size={14} /> : 
+                            <Loader2 className="animate-spin" size={14} /> : 
                             <Trash2 size={14} />
                           }
                         </button>
@@ -644,7 +656,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="animate-spin\" size={18} />
+                      <Loader2 className="animate-spin" size={18} />
                       <span>음성 생성 중...</span>
                     </>
                   ) : (
@@ -690,6 +702,58 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
         </div>
       </div>
 
+      {/* 개별 삭제 확인 모달 */}
+      {showSingleDeleteConfirm && scriptToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`p-6 rounded-lg max-w-md w-full mx-4 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <h3 className="text-lg font-semibold mb-4">대본 삭제 확인</h3>
+            <p className={`mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              "<strong>{scriptToDelete.title}</strong>" 대본을 삭제하시겠습니까?
+              <br />
+              <span className="text-sm text-red-500">이 작업은 되돌릴 수 없습니다.</span>
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowSingleDeleteConfirm(false);
+                  setScriptToDelete(null);
+                }}
+                disabled={isDeleting}
+                className={`flex-1 py-2 px-4 rounded-md transition-colors duration-200 ${
+                  darkMode 
+                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteScript}
+                disabled={isDeleting}
+                className={`flex-1 py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center space-x-2 ${
+                  isDeleting
+                    ? darkMode 
+                      ? 'bg-red-700 text-gray-400 cursor-not-allowed' 
+                      : 'bg-red-400 text-white cursor-not-allowed'
+                    : darkMode
+                      ? 'bg-red-600 hover:bg-red-500 text-white'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                }`}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} />
+                    <span>삭제 중...</span>
+                  </>
+                ) : (
+                  <span>삭제</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 다중 삭제 확인 모달 */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -727,7 +791,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
