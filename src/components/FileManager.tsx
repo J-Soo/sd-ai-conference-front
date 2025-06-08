@@ -3,23 +3,89 @@ import FileUploader from './FileUploader';
 import FileList from './FileList';
 import ResponseDisplay from './ResponseDisplay';
 import { FileInfo } from '../types';
-import { Upload, SendHorizontal, Clock } from 'lucide-react';
+import { Upload, SendHorizontal, Clock, TestTube } from 'lucide-react';
 import axios from 'axios';
 
 // 기본 API 기본 URL (환경 변수나 자동 탐색으로 대체될 수 있음)
 const DEFAULT_API_BASE_URL = 'http://localhost:8000/api/v1';
 
+// 더미 응답 데이터
+const DUMMY_RESPONSES = [
+  `안녕하세요! 오늘 발표할 주제에 대해 말씀드리겠습니다.
+
+첫 번째로, 우리가 다룰 핵심 내용은 다음과 같습니다:
+- 현재 시장 상황 분석
+- 새로운 기술 동향
+- 향후 전망과 기회
+
+두 번째로, 시장 분석 결과를 보면 지난 분기 대비 30% 성장을 기록했습니다. 이는 우리의 예상을 뛰어넘는 결과입니다.
+
+세 번째로, 기술 혁신 측면에서 AI와 머신러닝 기술의 도입이 핵심 성공 요인이었습니다.
+
+마지막으로, 앞으로의 계획과 목표에 대해 말씀드리겠습니다. 우리는 다음 분기에 더욱 혁신적인 솔루션을 선보일 예정입니다.
+
+감사합니다.`,
+
+  `여러분, 반갑습니다!
+
+오늘 준비한 발표 내용은 크게 세 부분으로 구성되어 있습니다.
+
+**1부: 문제 정의**
+현재 우리가 직면한 주요 과제들을 살펴보겠습니다. 고객 만족도 향상과 운영 효율성 개선이 핵심입니다.
+
+**2부: 해결 방안**
+이러한 문제들을 해결하기 위한 구체적인 전략을 제시하겠습니다:
+- 프로세스 자동화
+- 데이터 기반 의사결정
+- 고객 중심 서비스 개선
+
+**3부: 실행 계획**
+단계별 실행 로드맵과 예상 성과를 공유하겠습니다.
+
+이번 프로젝트를 통해 우리는 더 나은 미래를 만들어갈 것입니다.
+
+질문이 있으시면 언제든 말씀해 주세요. 감사합니다!`,
+
+  `프레젠테이션을 시작하겠습니다.
+
+**개요**
+오늘 발표는 혁신과 성장에 관한 이야기입니다. 우리가 어떻게 변화하는 시장에 적응하고 있는지 보여드리겠습니다.
+
+**현황 분석**
+- 매출 증가율: 전년 대비 25% 상승
+- 고객 만족도: 4.8/5.0 달성
+- 시장 점유율: 업계 3위로 상승
+
+**핵심 성과**
+우리의 주요 성과는 다음과 같습니다:
+1. 신제품 출시 성공
+2. 글로벌 시장 진출
+3. 파트너십 확대
+
+**향후 계획**
+다음 단계로는 다음과 같은 목표를 설정했습니다:
+- 디지털 전환 가속화
+- 지속가능한 성장 모델 구축
+- 인재 육성 프로그램 강화
+
+**결론**
+우리는 지속적인 혁신을 통해 더 큰 성공을 이룰 것입니다.
+
+여러분의 관심과 지원에 감사드립니다.`
+];
+
 interface FileManagerProps {
   darkMode: boolean;
+  serverConnected: boolean;
+  setServerConnected: (connected: boolean) => void;
 }
 
-const FileManager: React.FC<FileManagerProps> = ({ darkMode }) => {
+const FileManager: React.FC<FileManagerProps> = ({ darkMode, serverConnected, setServerConnected }) => {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [apiBaseUrl, setApiBaseUrl] = useState<string>(import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL);
-  const [serverConnected, setServerConnected] = useState<boolean>(false);
   const [durationMinutes, setDurationMinutes] = useState<number>(3);
 
   // 서버 자동 탐색 함수
@@ -56,8 +122,7 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode }) => {
       }
     }
     
-    console.error('사용 가능한 서버를 찾지 못했습니다.');
-    setError('백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.');
+    console.log('사용 가능한 서버를 찾지 못했습니다. 테스트 모드로 전환합니다.');
     setServerConnected(false);
   };
 
@@ -82,14 +147,55 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode }) => {
     }
   };
 
+  // 더미 데이터로 응답 시뮬레이션
+  const simulateResponse = async () => {
+    setIsLoading(true);
+    setResponse(null);
+    setError(null);
+
+    try {
+      // 2-4초 랜덤 로딩 시간
+      const loadingTime = Math.random() * 2000 + 2000;
+      await new Promise(resolve => setTimeout(resolve, loadingTime));
+      
+      // 랜덤 더미 응답 선택
+      const randomResponse = DUMMY_RESPONSES[Math.floor(Math.random() * DUMMY_RESPONSES.length)];
+      
+      // 파일 정보를 포함한 응답 생성
+      const fileInfo = files[0];
+      const enhancedResponse = `[테스트 모드] 파일: ${fileInfo.name} (${fileInfo.size})
+발표 시간: ${durationMinutes}분
+생성 시간: ${new Date().toLocaleString()}
+
+========================================
+생성된 발표 대본:
+========================================
+
+${randomResponse}
+
+========================================
+※ 이는 테스트용 더미 데이터입니다.
+실제 서비스 이용을 위해서는 백엔드 서버가 필요합니다.
+========================================`;
+      
+      setResponse(enhancedResponse);
+      setIsLoading(false);
+      
+    } catch (error: any) {
+      setError("테스트 모드에서 오류가 발생했습니다.");
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (files.length === 0) {
       setError("파일을 먼저 업로드해주세요.");
       return;
     }
     
+    // 서버가 연결되지 않은 경우 더미 데이터로 시뮬레이션
     if (!serverConnected) {
-      setError("백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.");
+      await simulateResponse();
       return;
     }
 
@@ -182,15 +288,30 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode }) => {
 
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const newResponse = `
+      if (!serverConnected) {
+        // 테스트 모드에서의 처리 시뮬레이션
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const newResponse = `[테스트 모드] 응답 처리 완료
+--------------
+이전 응답을 성공적으로 처리했습니다.
+원본 응답 크기: ${response.length} 바이트
+처리 완료 시간: ${new Date().toLocaleString()}
+
+※ 이는 테스트용 더미 데이터입니다.
+        `;
+        setResponse(newResponse);
+      } else {
+        // 실제 서버 처리
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const newResponse = `
 처리 결과:
 --------------
 이전 응답을 성공적으로 처리했습니다.
 원본 응답 크기: ${response.length} 바이트
 처리 완료 시간: ${new Date().toLocaleString()}
-      `;
-      setResponse(newResponse);
+        `;
+        setResponse(newResponse);
+      }
     } catch (err) {
       setError("응답 처리 중 오류가 발생했습니다.");
     } finally {
@@ -202,16 +323,17 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode }) => {
     <div className="space-y-8">
       <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
         <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          <h2 className="text-xl font-semibold">파일 업로드</h2>
-          {serverConnected ? (
-            <p className={`text-sm ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-              서버 연결됨: {apiBaseUrl}
-            </p>
-          ) : (
-            <p className={`text-sm ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
-              서버 연결 안됨 - 다시 연결 시도 중...
-            </p>
-          )}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">파일 업로드</h2>
+            {!serverConnected && (
+              <div className="flex items-center space-x-2">
+                <TestTube className={`${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} size={16} />
+                <span className={`text-sm ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                  테스트 모드
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="p-6">
           <FileUploader onFilesAdded={handleFilesAdded} darkMode={darkMode} />
@@ -257,11 +379,11 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode }) => {
             
             <button
               onClick={handleSubmit}
-              disabled={isLoading || files.length === 0 || !serverConnected}
+              disabled={isLoading || files.length === 0}
               className={`mt-6 px-5 py-3 rounded-md w-full flex justify-center items-center space-x-2 font-medium transition-colors duration-200
                 ${isLoading 
                   ? `${darkMode ? 'bg-blue-700 text-gray-300' : 'bg-blue-400 text-white'} cursor-not-allowed` 
-                  : files.length === 0 || !serverConnected
+                  : files.length === 0
                     ? `${darkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-200 text-gray-500'} cursor-not-allowed`
                     : `${darkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'} text-white`
                 }`}
@@ -272,12 +394,12 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode }) => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>처리 중...</span>
+                  <span>{serverConnected ? '처리 중...' : '테스트 처리 중...'}</span>
                 </>
               ) : (
                 <>
                   <Upload size={18} />
-                  <span>서버로 전송</span>
+                  <span>{serverConnected ? '서버로 전송' : '테스트 실행'}</span>
                 </>
               )}
             </button>
@@ -287,7 +409,17 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode }) => {
 
       <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
         <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          <h2 className="text-xl font-semibold">서버 응답</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">서버 응답</h2>
+            {!serverConnected && response && (
+              <div className="flex items-center space-x-2">
+                <TestTube className={`${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} size={16} />
+                <span className={`text-xs ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                  더미 데이터
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="p-6">
           <ResponseDisplay response={response} isLoading={isLoading} darkMode={darkMode} />
@@ -300,7 +432,7 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode }) => {
                 transition-colors duration-200`}
             >
               <SendHorizontal size={18} />
-              <span>응답 처리</span>
+              <span>{serverConnected ? '응답 처리' : '테스트 처리'}</span>
             </button>
           )}
         </div>

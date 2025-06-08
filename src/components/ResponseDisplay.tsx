@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileSearch, Loader2 } from 'lucide-react';
+import { FileSearch, Loader2, TestTube } from 'lucide-react';
 
 interface ResponseDisplayProps {
   response: string | null;
@@ -10,6 +10,7 @@ interface ResponseDisplayProps {
 const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response, isLoading, darkMode }) => {
   // 여러 파일 결과가 포함된 응답인지 확인 (구분자로 확인)
   const hasMultipleResults = response?.includes('========================================');
+  const isTestMode = response?.includes('[테스트 모드]');
   
   return (
     <div className="h-full">
@@ -24,9 +25,19 @@ const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ response, isLoading, 
       ) : response ? (
         <div className={`p-6 rounded-md overflow-auto h-[calc(100%-2rem)] 
           ${darkMode ? 'bg-gray-900 text-gray-200' : 'bg-gray-50 text-gray-800'}`}>
-          <h3 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            {hasMultipleResults ? '여러 파일의 생성 결과' : '생성된 대본'}
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-xl font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+              {hasMultipleResults ? '여러 파일의 생성 결과' : '생성된 대본'}
+            </h3>
+            {isTestMode && (
+              <div className="flex items-center space-x-1">
+                <TestTube className={`${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} size={16} />
+                <span className={`text-xs ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                  테스트 데이터
+                </span>
+              </div>
+            )}
+          </div>
           <div className={`whitespace-pre-wrap ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             {response}
           </div>

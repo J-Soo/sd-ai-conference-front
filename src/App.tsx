@@ -2,9 +2,11 @@ import React from 'react';
 import { Moon, Sun } from 'lucide-react';
 import FileManager from './components/FileManager';
 import Header from './components/Header';
+import ConnectionBanner from './components/ConnectionBanner';
 
 function App() {
   const [darkMode, setDarkMode] = React.useState(false);
+  const [serverConnected, setServerConnected] = React.useState<boolean>(false);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -12,6 +14,7 @@ function App() {
 
   return (
     <div className={`min-h-screen transition-colors duration-200 ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+      <ConnectionBanner isConnected={serverConnected} darkMode={darkMode} />
       <Header darkMode={darkMode} />
       
       <main className="container mx-auto px-4 py-8">
@@ -26,7 +29,11 @@ function App() {
           </button>
         </div>
         
-        <FileManager darkMode={darkMode} />
+        <FileManager 
+          darkMode={darkMode} 
+          serverConnected={serverConnected}
+          setServerConnected={setServerConnected}
+        />
       </main>
       
       <footer className={`py-6 ${darkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
