@@ -7,13 +7,15 @@ interface ScriptGenerationPageProps {
   serverConnected: boolean;
   setServerConnected: (connected: boolean) => void;
   onBack: () => void;
+  onNavigateToVoiceGeneration: () => void;
 }
 
 const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
   darkMode,
   serverConnected,
   setServerConnected,
-  onBack
+  onBack,
+  onNavigateToVoiceGeneration
 }) => {
   return (
     <div className="space-y-6">
@@ -41,6 +43,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
         darkMode={darkMode} 
         serverConnected={serverConnected}
         setServerConnected={setServerConnected}
+        onNavigateToVoiceGeneration={onNavigateToVoiceGeneration}
       />
     </div>
   );

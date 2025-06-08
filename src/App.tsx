@@ -16,6 +16,10 @@ function App() {
     setDarkMode(!darkMode);
   };
 
+  const handleNavigateToVoiceGeneration = () => {
+    setCurrentPage('voice-generation');
+  };
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'script-generation':
@@ -25,6 +29,7 @@ function App() {
             serverConnected={serverConnected}
             setServerConnected={setServerConnected}
             onBack={() => setCurrentPage('home')}
+            onNavigateToVoiceGeneration={handleNavigateToVoiceGeneration}
           />
         );
       case 'voice-generation':

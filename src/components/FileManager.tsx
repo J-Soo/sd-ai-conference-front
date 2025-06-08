@@ -3,7 +3,7 @@ import FileUploader from './FileUploader';
 import FileList from './FileList';
 import ResponseDisplay from './ResponseDisplay';
 import { FileInfo } from '../types';
-import { Upload, SendHorizontal, Clock, TestTube } from 'lucide-react';
+import { Upload, Volume2, Clock, TestTube } from 'lucide-react';
 import axios from 'axios';
 
 // 기본 API 기본 URL (환경 변수나 자동 탐색으로 대체될 수 있음)
@@ -78,9 +78,15 @@ interface FileManagerProps {
   darkMode: boolean;
   serverConnected: boolean;
   setServerConnected: (connected: boolean) => void;
+  onNavigateToVoiceGeneration?: () => void;
 }
 
-const FileManager: React.FC<FileManagerProps> = ({ darkMode, serverConnected, setServerConnected }) => {
+const FileManager: React.FC<FileManagerProps> = ({ 
+  darkMode, 
+  serverConnected, 
+  setServerConnected,
+  onNavigateToVoiceGeneration 
+}) => {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
@@ -283,39 +289,9 @@ ${randomResponse}
     }
   };
 
-  const handleProcessResponse = async () => {
-    if (!response) return;
-
-    setIsLoading(true);
-    try {
-      if (!serverConnected) {
-        // 테스트 모드에서의 처리 시뮬레이션
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const newResponse = `[테스트 모드] 응답 처리 완료
---------------
-이전 응답을 성공적으로 처리했습니다.
-원본 응답 크기: ${response.length} 바이트
-처리 완료 시간: ${new Date().toLocaleString()}
-
-※ 이는 테스트용 더미 데이터입니다.
-        `;
-        setResponse(newResponse);
-      } else {
-        // 실제 서버 처리
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const newResponse = `
-처리 결과:
---------------
-이전 응답을 성공적으로 처리했습니다.
-원본 응답 크기: ${response.length} 바이트
-처리 완료 시간: ${new Date().toLocaleString()}
-        `;
-        setResponse(newResponse);
-      }
-    } catch (err) {
-      setError("응답 처리 중 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
+  const handleNavigateToVoiceGeneration = () => {
+    if (onNavigateToVoiceGeneration) {
+      onNavigateToVoiceGeneration();
     }
   };
 
@@ -390,8 +366,8 @@ ${randomResponse}
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
-                    <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   <span>{serverConnected ? '처리 중...' : '테스트 처리 중...'}</span>
@@ -427,13 +403,13 @@ ${randomResponse}
           {response && !isLoading && (
             <div className="mt-6">
               <button
-                onClick={handleProcessResponse}
+                onClick={handleNavigateToVoiceGeneration}
                 className={`w-full px-5 py-3 rounded-md flex justify-center items-center space-x-2 font-medium
                   ${darkMode ? 'bg-green-600 hover:bg-green-500' : 'bg-green-600 hover:bg-green-700'} text-white
                   transition-colors duration-200`}
               >
-                <SendHorizontal size={18} />
-                <span>{serverConnected ? '응답 처리' : '테스트 처리'}</span>
+                <Volume2 size={18} />
+                <span>음성 생성하기</span>
               </button>
             </div>
           )}
