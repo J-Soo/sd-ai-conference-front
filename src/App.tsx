@@ -1,15 +1,48 @@
 import React from 'react';
 import { Moon, Sun } from 'lucide-react';
-import FileManager from './components/FileManager';
 import Header from './components/Header';
 import ConnectionBanner from './components/ConnectionBanner';
+import HomePage from './pages/HomePage';
+import ScriptGenerationPage from './pages/ScriptGenerationPage';
+import VoiceGenerationPage from './pages/VoiceGenerationPage';
+import { PageType } from './types';
 
 function App() {
   const [darkMode, setDarkMode] = React.useState(false);
   const [serverConnected, setServerConnected] = React.useState<boolean>(false);
+  const [currentPage, setCurrentPage] = React.useState<PageType>('home');
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
+  };
+
+  const renderCurrentPage = () => {
+    switch (currentPage) {
+      case 'script-generation':
+        return (
+          <ScriptGenerationPage
+            darkMode={darkMode}
+            serverConnected={serverConnected}
+            setServerConnected={setServerConnected}
+            onBack={() => setCurrentPage('home')}
+          />
+        );
+      case 'voice-generation':
+        return (
+          <VoiceGenerationPage
+            darkMode={darkMode}
+            serverConnected={serverConnected}
+            onBack={() => setCurrentPage('home')}
+          />
+        );
+      default:
+        return (
+          <HomePage
+            darkMode={darkMode}
+            onNavigate={setCurrentPage}
+          />
+        );
+    }
   };
 
   return (
@@ -19,7 +52,10 @@ function App() {
       
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">관리자 페이지</h1>
+          <h1 className="text-3xl font-bold">
+            {currentPage === 'home' ? '관리자 페이지' : 
+             currentPage === 'script-generation' ? '대본 생성' : '음성 생성'}
+          </h1>
           <button 
             onClick={toggleDarkMode}
             className={`p-2 rounded-full ${darkMode ? 'bg-gray-800 text-yellow-400' : 'bg-gray-200 text-gray-700'} transition-colors duration-200`}
@@ -29,11 +65,7 @@ function App() {
           </button>
         </div>
         
-        <FileManager 
-          darkMode={darkMode} 
-          serverConnected={serverConnected}
-          setServerConnected={setServerConnected}
-        />
+        {renderCurrentPage()}
       </main>
       
       <footer className={`py-6 ${darkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
