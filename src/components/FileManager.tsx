@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import FileUploader from './FileUploader';
 import FileList from './FileList';
 import ResponseDisplay from './ResponseDisplay';
-import { FileInfo, Script } from '../types';
-import { Upload, SendHorizontal, Clock, TestTube, Save } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { FileInfo } from '../types';
+import { Upload, SendHorizontal, Clock, TestTube } from 'lucide-react';
 import axios from 'axios';
 
 // 기본 API 기본 URL (환경 변수나 자동 탐색으로 대체될 수 있음)
@@ -88,8 +87,6 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode, serverConnected, se
   const [error, setError] = useState<string | null>(null);
   const [apiBaseUrl, setApiBaseUrl] = useState<string>(import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL);
   const [durationMinutes, setDurationMinutes] = useState<number>(3);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // 서버 자동 탐색 함수
   const discoverServer = async () => {
@@ -137,7 +134,6 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode, serverConnected, se
   const handleFilesAdded = (newFiles: FileInfo[]) => {
     setFiles(prev => [...prev, ...newFiles]);
     setError(null);
-    setSaveSuccess(false);
   };
 
   const handleFileRemove = (id: string) => {
@@ -287,69 +283,6 @@ ${randomResponse}
     }
   };
 
-  const handleSaveScript = async () => {
-    if (!response) return;
-
-    setIsSaving(true);
-    setSaveSuccess(false);
-    setError(null);
-
-    try {
-      // 대본 내용에서 실제 대본 부분만 추출
-      const scriptContent = response.includes('생성된 발표 대본:') 
-        ? response.split('생성된 발표 대본:')[1]?.split('========================================')[0]?.trim() || response
-        : response;
-
-      const fileInfo = files[0];
-      const scriptTitle = fileInfo.name.replace(/\.[^/.]+$/, ""); // 확장자 제거
-
-      const scriptData: Script = {
-        id: '', // Supabase에서 자동 생성
-        title: scriptTitle,
-        content: scriptContent,
-        file_name: fileInfo.name,
-        duration_minutes: durationMinutes,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      if (serverConnected) {
-        // Supabase에 저장
-        const { data, error } = await supabase
-          .from('scripts')
-          .insert([{
-            title: scriptData.title,
-            content: scriptData.content,
-            file_name: scriptData.file_name,
-            duration_minutes: scriptData.duration_minutes
-          }])
-          .select();
-
-        if (error) throw error;
-        console.log('대본 저장 성공:', data);
-      } else {
-        // 테스트 모드: 로컬 스토리지에 저장
-        const existingScripts = JSON.parse(localStorage.getItem('test_scripts') || '[]');
-        const newScript = {
-          ...scriptData,
-          id: 'test_' + Date.now()
-        };
-        existingScripts.push(newScript);
-        localStorage.setItem('test_scripts', JSON.stringify(existingScripts));
-        console.log('테스트 모드: 로컬 스토리지에 저장');
-      }
-
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000); // 3초 후 성공 메시지 숨김
-
-    } catch (error: any) {
-      console.error('대본 저장 오류:', error);
-      setError('대본 저장 중 오류가 발생했습니다.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleProcessResponse = async () => {
     if (!response) return;
 
@@ -410,12 +343,6 @@ ${randomResponse}
               {error}
             </div>
           )}
-
-          {saveSuccess && (
-            <div className="mt-4 p-3 bg-green-100 border border-green-200 text-green-700 rounded-md">
-              대본이 성공적으로 저장되었습니다!
-            </div>
-          )}
           
           <div className="mt-8">
             <div className="flex justify-between items-center mb-4">
@@ -463,8 +390,8 @@ ${randomResponse}
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
-                    <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   <span>{serverConnected ? '처리 중...' : '테스트 처리 중...'}</span>
@@ -498,35 +425,10 @@ ${randomResponse}
           <ResponseDisplay response={response} isLoading={isLoading} darkMode={darkMode} />
           
           {response && !isLoading && (
-            <div className="mt-6 flex space-x-3">
-              <button
-                onClick={handleSaveScript}
-                disabled={isSaving}
-                className={`flex-1 px-5 py-3 rounded-md flex justify-center items-center space-x-2 font-medium transition-colors duration-200
-                  ${isSaving
-                    ? `${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'} cursor-not-allowed`
-                    : `${darkMode ? 'bg-purple-600 hover:bg-purple-500' : 'bg-purple-600 hover:bg-purple-700'} text-white`
-                  }`}
-              >
-                {isSaving ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
-                      <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>저장 중...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save size={18} />
-                    <span>대본 저장</span>
-                  </>
-                )}
-              </button>
-              
+            <div className="mt-6">
               <button
                 onClick={handleProcessResponse}
-                className={`flex-1 px-5 py-3 rounded-md flex justify-center items-center space-x-2 font-medium
+                className={`w-full px-5 py-3 rounded-md flex justify-center items-center space-x-2 font-medium
                   ${darkMode ? 'bg-green-600 hover:bg-green-500' : 'bg-green-600 hover:bg-green-700'} text-white
                   transition-colors duration-200`}
               >

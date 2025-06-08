@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Play, Pause, Download, Loader2, FileText, Clock, Calendar, Volume2, AlertCircle } from 'lucide-react';
 import { Script, AudioGeneration } from '../types';
-import { supabase } from '../lib/supabase';
 
 interface VoiceGenerationPageProps {
   darkMode: boolean;
@@ -23,7 +22,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [loadingScripts, setLoadingScripts] = useState(true);
 
-  // 더미 스크립트 데이터 (Supabase 연결이 안될 때 사용)
+  // 더미 스크립트 데이터 (백엔드 연결이 안될 때 사용)
   const dummyScripts: Script[] = [
     {
       id: '1',
@@ -65,13 +64,13 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
 
     try {
       if (serverConnected) {
-        const { data, error } = await supabase
-          .from('scripts')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        setScripts(data || []);
+        // 실제 백엔드 API 호출 (구현 예정)
+        // const response = await axios.get('/api/scripts');
+        // setScripts(response.data);
+        
+        // 임시로 더미 데이터 사용
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setScripts(dummyScripts);
       } else {
         // 테스트 모드: 더미 데이터 사용
         await new Promise(resolve => setTimeout(resolve, 1000)); // 로딩 시뮬레이션
@@ -324,7 +323,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="animate-spin\" size={18} />
+                      <Loader2 className="animate-spin" size={18} />
                       <span>음성 생성 중...</span>
                     </>
                   ) : (
