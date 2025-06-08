@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Play, Pause, Download, Loader2, FileText, Clock, Calendar, Volume2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Download, Loader2, FileText, Clock, Calendar, Volume2, AlertCircle, Trash2, CheckSquare, Square, X } from 'lucide-react';
 import { Script, AudioGeneration } from '../types';
 import axios from 'axios';
 
@@ -22,6 +22,13 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingScripts, setLoadingScripts] = useState(true);
+  
+  // 삭제 관련 상태
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [selectedScriptIds, setSelectedScriptIds] = useState<Set<string>>(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingScriptId, setDeletingScriptId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // 더미 스크립트 데이터 (백엔드 연결이 안될 때 사용)
   const dummyScripts: Script[] = [
@@ -102,6 +109,150 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
       setScripts([]);
     } finally {
       setLoadingScripts(false);
+    }
+  };
+
+  // 개별 대본 삭제
+  const handleDeleteScript = async (scriptId: string) => {
+    setIsDeleting(true);
+    setDeletingScriptId(scriptId);
+
+    try {
+      if (serverConnected) {
+        try {
+          await axios.delete(`http://localhost:8000/api/v1/generation/scripts/${scriptId}`);
+          
+          // 성공적으로 삭제된 경우 로컬 상태 업데이트
+          setScripts(prev => prev.filter(script => script.id !== scriptId));
+          
+          // 삭제된 스크립트가 현재 선택된 스크립트인 경우 선택 해제
+          if (selectedScript?.id === scriptId) {
+            setSelectedScript(null);
+            setAudioGeneration(null);
+          }
+          
+        } catch (apiError: any) {
+          console.error('API 삭제 오류:', apiError);
+          
+          if (apiError.response && apiError.response.status === 404) {
+            setError('삭제 API가 아직 구현되지 않았습니다.');
+            
+            // API가 구현되지 않은 경우에만 임시로 로컬에서 삭제 (개발 편의를 위해)
+            setScripts(prev => prev.filter(script => script.id !== scriptId));
+            if (selectedScript?.id === scriptId) {
+              setSelectedScript(null);
+              setAudioGeneration(null);
+            }
+          } else {
+            setError(`삭제 중 오류 발생: ${apiError.message || '알 수 없는 오류'}`);
+          }
+        }
+      } else {
+        // 테스트 모드: 로컬에서 삭제 시뮬레이션
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setScripts(prev => prev.filter(script => script.id !== scriptId));
+        
+        if (selectedScript?.id === scriptId) {
+          setSelectedScript(null);
+          setAudioGeneration(null);
+        }
+      }
+    } catch (err: any) {
+      console.error('대본 삭제 오류:', err);
+      setError('대본 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+      setDeletingScriptId(null);
+    }
+  };
+
+  // 다중 대본 삭제
+  const handleDeleteMultipleScripts = async () => {
+    if (selectedScriptIds.size === 0) return;
+
+    setIsDeleting(true);
+
+    try {
+      const scriptIdsArray = Array.from(selectedScriptIds);
+      
+      if (serverConnected) {
+        try {
+          await axios.delete('http://localhost:8000/api/v1/generation/scripts/bulk', {
+            data: { script_ids: scriptIdsArray }
+          });
+          
+          // 성공적으로 삭제된 경우 로컬 상태 업데이트
+          setScripts(prev => prev.filter(script => !selectedScriptIds.has(script.id)));
+          
+          // 삭제된 스크립트 중에 현재 선택된 스크립트가 있는 경우 선택 해제
+          if (selectedScript && selectedScriptIds.has(selectedScript.id)) {
+            setSelectedScript(null);
+            setAudioGeneration(null);
+          }
+          
+        } catch (apiError: any) {
+          console.error('API 다중 삭제 오류:', apiError);
+          
+          if (apiError.response && apiError.response.status === 404) {
+            setError('다중 삭제 API가 아직 구현되지 않았습니다.');
+            
+            // API가 구현되지 않은 경우에만 임시로 로컬에서 삭제 (개발 편의를 위해)
+            setScripts(prev => prev.filter(script => !selectedScriptIds.has(script.id)));
+            if (selectedScript && selectedScriptIds.has(selectedScript.id)) {
+              setSelectedScript(null);
+              setAudioGeneration(null);
+            }
+          } else {
+            setError(`다중 삭제 중 오류 발생: ${apiError.message || '알 수 없는 오류'}`);
+          }
+        }
+      } else {
+        // 테스트 모드: 로컬에서 삭제 시뮬레이션
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setScripts(prev => prev.filter(script => !selectedScriptIds.has(script.id)));
+        
+        if (selectedScript && selectedScriptIds.has(selectedScript.id)) {
+          setSelectedScript(null);
+          setAudioGeneration(null);
+        }
+      }
+      
+      // 다중 선택 모드 종료 및 선택 초기화
+      setIsMultiSelectMode(false);
+      setSelectedScriptIds(new Set());
+      setShowDeleteConfirm(false);
+      
+    } catch (err: any) {
+      console.error('다중 대본 삭제 오류:', err);
+      setError('다중 대본 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // 다중 선택 토글
+  const toggleMultiSelectMode = () => {
+    setIsMultiSelectMode(!isMultiSelectMode);
+    setSelectedScriptIds(new Set());
+  };
+
+  // 스크립트 선택 토글
+  const toggleScriptSelection = (scriptId: string) => {
+    const newSelection = new Set(selectedScriptIds);
+    if (newSelection.has(scriptId)) {
+      newSelection.delete(scriptId);
+    } else {
+      newSelection.add(scriptId);
+    }
+    setSelectedScriptIds(newSelection);
+  };
+
+  // 전체 선택/해제
+  const toggleSelectAll = () => {
+    if (selectedScriptIds.size === scripts.length) {
+      setSelectedScriptIds(new Set());
+    } else {
+      setSelectedScriptIds(new Set(scripts.map(script => script.id)));
     }
   };
 
@@ -252,12 +403,84 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
         {/* 스크립트 목록 */}
         <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
           <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <h3 className="text-lg font-semibold">저장된 대본 목록</h3>
-            {!serverConnected && (
-              <p className={`text-xs mt-1 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                테스트 모드 - 더미 데이터 표시 중
-              </p>
-            )}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">저장된 대본 목록</h3>
+                {!serverConnected && (
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                    테스트 모드 - 더미 데이터 표시 중
+                  </p>
+                )}
+              </div>
+              
+              {scripts.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  {isMultiSelectMode && (
+                    <>
+                      <button
+                        onClick={toggleSelectAll}
+                        className={`p-1.5 rounded-md transition-colors duration-200 ${
+                          darkMode 
+                            ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                        }`}
+                        title={selectedScriptIds.size === scripts.length ? "전체 해제" : "전체 선택"}
+                      >
+                        {selectedScriptIds.size === scripts.length ? 
+                          <CheckSquare size={16} /> : 
+                          <Square size={16} />
+                        }
+                      </button>
+                      
+                      {selectedScriptIds.size > 0 && (
+                        <button
+                          onClick={() => setShowDeleteConfirm(true)}
+                          disabled={isDeleting}
+                          className={`p-1.5 rounded-md transition-colors duration-200 ${
+                            isDeleting
+                              ? darkMode 
+                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : darkMode
+                                ? 'bg-red-600 hover:bg-red-500 text-white'
+                                : 'bg-red-600 hover:bg-red-700 text-white'
+                          }`}
+                          title={`선택된 ${selectedScriptIds.size}개 삭제`}
+                        >
+                          {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={toggleMultiSelectMode}
+                        className={`p-1.5 rounded-md transition-colors duration-200 ${
+                          darkMode 
+                            ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                        }`}
+                        title="선택 모드 종료"
+                      >
+                        <X size={16} />
+                      </button>
+                    </>
+                  )}
+                  
+                  {!isMultiSelectMode && (
+                    <button
+                      onClick={toggleMultiSelectMode}
+                      className={`p-1.5 rounded-md transition-colors duration-200 ${
+                        darkMode 
+                          ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                      }`}
+                      title="다중 선택 모드"
+                    >
+                      <CheckSquare size={16} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div className="p-6">
             {loadingScripts ? (
@@ -280,9 +503,8 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                 {scripts.map((script) => (
                   <div
                     key={script.id}
-                    onClick={() => setSelectedScript(script)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                      selectedScript?.id === script.id
+                    className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                      selectedScript?.id === script.id && !isMultiSelectMode
                         ? darkMode 
                           ? 'border-blue-500 bg-blue-900/20' 
                           : 'border-blue-500 bg-blue-50'
@@ -291,26 +513,77 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                           : 'border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100'
                     }`}
                   >
-                    <h4 className="font-medium mb-2">{script.title}</h4>
-                    <div className="flex items-center space-x-4 text-xs">
-                      <div className="flex items-center space-x-1">
-                        <FileText size={12} />
-                        <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                          {script.file_name}
-                        </span>
+                    <div className="flex items-start justify-between">
+                      <div 
+                        className={`flex-1 ${isMultiSelectMode ? '' : 'cursor-pointer'}`}
+                        onClick={() => {
+                          if (isMultiSelectMode) {
+                            toggleScriptSelection(script.id);
+                          } else {
+                            setSelectedScript(script);
+                          }
+                        }}
+                      >
+                        <div className="flex items-start space-x-3">
+                          {isMultiSelectMode && (
+                            <div className="mt-1">
+                              {selectedScriptIds.has(script.id) ? 
+                                <CheckSquare className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={18} /> : 
+                                <Square className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
+                              }
+                            </div>
+                          )}
+                          
+                          <div className="flex-1">
+                            <h4 className="font-medium mb-2">{script.title}</h4>
+                            <div className="flex items-center space-x-4 text-xs">
+                              <div className="flex items-center space-x-1">
+                                <FileText size={12} />
+                                <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                                  {script.file_name}
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Clock size={12} />
+                                <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                                  {script.duration_minutes}분
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Calendar size={12} />
+                                <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                                  {formatDate(script.created_at)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock size={12} />
-                        <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                          {script.duration_minutes}분
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Calendar size={12} />
-                        <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                          {formatDate(script.created_at)}
-                        </span>
-                      </div>
+                      
+                      {!isMultiSelectMode && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteScript(script.id);
+                          }}
+                          disabled={isDeleting && deletingScriptId === script.id}
+                          className={`p-1.5 rounded-md transition-colors duration-200 ${
+                            isDeleting && deletingScriptId === script.id
+                              ? darkMode 
+                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : darkMode
+                                ? 'bg-red-600 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100'
+                                : 'bg-red-600 hover:bg-red-700 text-white opacity-0 group-hover:opacity-100'
+                          }`}
+                          title="대본 삭제"
+                        >
+                          {isDeleting && deletingScriptId === script.id ? 
+                            <Loader2 className="animate-spin" size={14} /> : 
+                            <Trash2 size={14} />
+                          }
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -371,7 +644,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="animate-spin\" size={18} />
+                      <Loader2 className="animate-spin" size={18} />
                       <span>음성 생성 중...</span>
                     </>
                   ) : (
@@ -416,6 +689,55 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* 다중 삭제 확인 모달 */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`p-6 rounded-lg max-w-md w-full mx-4 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <h3 className="text-lg font-semibold mb-4">대본 삭제 확인</h3>
+            <p className={`mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              선택된 {selectedScriptIds.size}개의 대본을 삭제하시겠습니까?
+              <br />
+              <span className="text-sm text-red-500">이 작업은 되돌릴 수 없습니다.</span>
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className={`flex-1 py-2 px-4 rounded-md transition-colors duration-200 ${
+                  darkMode 
+                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteMultipleScripts}
+                disabled={isDeleting}
+                className={`flex-1 py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center space-x-2 ${
+                  isDeleting
+                    ? darkMode 
+                      ? 'bg-red-700 text-gray-400 cursor-not-allowed' 
+                      : 'bg-red-400 text-white cursor-not-allowed'
+                    : darkMode
+                      ? 'bg-red-600 hover:bg-red-500 text-white'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                }`}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} />
+                    <span>삭제 중...</span>
+                  </>
+                ) : (
+                  <span>삭제</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
