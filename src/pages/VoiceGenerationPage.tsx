@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Play, Pause, Download, Loader2, FileText, Clock, Calendar, Volume2, AlertCircle } from 'lucide-react';
 import { Script, AudioGeneration } from '../types';
+import axios from 'axios';
 
 interface VoiceGenerationPageProps {
   darkMode: boolean;
@@ -64,13 +65,31 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
 
     try {
       if (serverConnected) {
-        // 실제 백엔드 API 호출 (구현 예정)
-        // const response = await axios.get('/api/scripts');
-        // setScripts(response.data);
-        
-        // 임시로 더미 데이터 사용
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setScripts(dummyScripts);
+        // 실제 백엔드 API 호출
+        try {
+          const response = await axios.get('http://localhost:8000/api/v1/generation/scripts');
+          console.log('API 응답:', response.data);
+          if (response.data && Array.isArray(response.data)) {
+            setScripts(response.data);
+          } else {
+            console.error('API 응답 형식 오류:', response.data);
+            setError('API에서 유효한 응답을 받지 못했습니다.');
+            // 에러 시 빈 배열 설정 (더미 데이터 사용 안함)
+            setScripts([]);
+          }
+        } catch (apiError: any) {
+          console.error('API 호출 오류:', apiError);
+          
+          // 404 에러 - API가 아직 구현되지 않은 경우 특별 처리
+          if (apiError.response && apiError.response.status === 404) {
+            setError('스크립트 API가 아직 구현되지 않았습니다. 대본 생성 후 다시 시도해주세요.');
+          } else {
+            setError(`서버 오류: ${apiError.message || '알 수 없는 오류'}`);
+          }
+          
+          // 빈 배열 설정 (더미 데이터 사용 안함)
+          setScripts([]);
+        }
       } else {
         // 테스트 모드: 더미 데이터 사용
         await new Promise(resolve => setTimeout(resolve, 1000)); // 로딩 시뮬레이션
@@ -79,8 +98,8 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
     } catch (err: any) {
       console.error('스크립트 로드 오류:', err);
       setError('스크립트를 불러오는 중 오류가 발생했습니다.');
-      // 오류 시에도 더미 데이터 표시
-      setScripts(dummyScripts);
+      // 에러 시 빈 배열 설정 (더미 데이터 사용 안함)
+      setScripts([]);
     } finally {
       setLoadingScripts(false);
     }
@@ -94,22 +113,46 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
 
     try {
       if (serverConnected) {
-        // 실제 API 호출 (구현 예정)
-        // const response = await generateAudioAPI(selectedScript.id);
-        
-        // 임시로 더미 처리
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        const dummyAudio: AudioGeneration = {
-          id: 'audio_' + Date.now(),
-          script_id: selectedScript.id,
-          audio_url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // 테스트용 오디오
-          status: 'completed',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        setAudioGeneration(dummyAudio);
+        try {
+          // 실제 API 호출 시도
+          const response = await axios.post(`http://localhost:8000/api/v1/generation/generate-audio/${selectedScript.id}`);
+          
+          if (response.data && response.data.audio_url) {
+            setAudioGeneration({
+              id: response.data.id || 'audio_' + Date.now(),
+              script_id: selectedScript.id,
+              audio_url: response.data.audio_url,
+              status: response.data.status || 'completed',
+              created_at: response.data.created_at || new Date().toISOString(),
+              updated_at: response.data.updated_at || new Date().toISOString()
+            });
+          } else {
+            // API 응답이 유효하지 않은 경우
+            console.error('API 응답 형식 오류:', response.data);
+            setError('API에서 유효한 응답을 받지 못했습니다.');
+          }
+        } catch (apiError: any) {
+          console.error('API 호출 오류:', apiError);
+          
+          // 404 에러 - API가 아직 구현되지 않은 경우
+          if (apiError.response && apiError.response.status === 404) {
+            setError('음성 생성 API가 아직 구현되지 않았습니다.');
+            
+            // API가 구현되지 않은 경우에만 임시로 더미 데이터 사용 (개발 편의를 위해)
+            // 실제 환경에서는 이 부분 제거 필요
+            const dummyAudio: AudioGeneration = {
+              id: 'audio_' + Date.now(),
+              script_id: selectedScript.id,
+              audio_url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // 테스트용 오디오
+              status: 'completed',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            setAudioGeneration(dummyAudio);
+          } else {
+            setError(`서버 오류: ${apiError.message || '알 수 없는 오류'}`);
+          }
+        }
       } else {
         // 테스트 모드: 더미 오디오 생성 시뮬레이션
         await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
@@ -294,9 +337,14 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                 {/* 선택된 대본 정보 */}
                 <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
                   <h4 className="font-medium mb-2">{selectedScript.title}</h4>
-                  <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} line-clamp-3`}>
-                    {selectedScript.content.substring(0, 150)}...
-                  </p>
+                  <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} max-h-60 overflow-y-auto`}>
+                    {/* 대본 내용 전체 표시 - 여러 줄 형식 유지 */}
+                    {selectedScript.content.split('\n').map((line, index) => (
+                      <p key={index} className="mb-1">
+                        {line || '\u00A0'} {/* 빈 줄은 공백 문자로 대체 */}
+                      </p>
+                    ))}
+                  </div>
                   <div className="flex items-center space-x-4 mt-3 text-xs">
                     <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
                       예상 시간: {selectedScript.duration_minutes}분
