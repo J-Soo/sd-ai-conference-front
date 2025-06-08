@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import Header from './components/Header';
 import ConnectionBanner from './components/ConnectionBanner';
@@ -11,6 +11,30 @@ function App() {
   const [darkMode, setDarkMode] = React.useState(false);
   const [serverConnected, setServerConnected] = React.useState<boolean>(false);
   const [currentPage, setCurrentPage] = React.useState<PageType>('home');
+  
+  // 백엔드 서버 연결 상태 확인
+  useEffect(() => {
+    const checkServerConnection = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/health');
+        if (response.ok) {
+          setServerConnected(true);
+        } else {
+          setServerConnected(false);
+        }
+      } catch (error) {
+        console.error('백엔드 서버 연결 확인 실패:', error);
+        setServerConnected(false);
+      }
+    };
+    
+    checkServerConnection();
+    
+    // 30초마다 서버 연결 상태 확인
+    const intervalId = setInterval(checkServerConnection, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
