@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
+import axios from 'axios';
 import Header from './components/Header';
 import ConnectionBanner from './components/ConnectionBanner';
 import HomePage from './pages/HomePage';
@@ -11,6 +12,38 @@ function App() {
   const [darkMode, setDarkMode] = React.useState(false);
   const [serverConnected, setServerConnected] = React.useState<boolean>(false);
   const [currentPage, setCurrentPage] = React.useState<PageType>('home');
+
+  // 서버 연결 상태 확인 함수
+  const checkServerConnection = async () => {
+    console.log('앱 시작 시 서버 연결 확인 중...');
+    
+    try {
+      // 여러 포트 시도 (8000부터 8010까지)
+      for (let port = 8000; port <= 8010; port++) {
+        try {
+          const baseUrl = `http://localhost:${port}`;
+          console.log(`포트 시도: ${port}`);
+          const response = await axios.get(`${baseUrl}/health`, { timeout: 2000 });
+          console.log(`서버 연결 성공 (포트 ${port}):`, response.data);
+          setServerConnected(true);
+          return;
+        } catch (err) {
+          console.warn(`포트 ${port} 연결 실패`);
+        }
+      }
+      
+      console.log('사용 가능한 서버를 찾지 못했습니다. 테스트 모드로 전환합니다.');
+      setServerConnected(false);
+    } catch (error) {
+      console.error('서버 연결 확인 중 오류 발생:', error);
+      setServerConnected(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 서버 연결 확인
+  useEffect(() => {
+    checkServerConnection();
+  }, []);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);

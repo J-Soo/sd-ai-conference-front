@@ -103,7 +103,7 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode, serverConnected, se
         setServerConnected(true);
         return;
       } catch (err) {
-        console.warn('환경 변수 URL 연결 실패, 다른 포트 시도...');
+        console.warn('환경 변수 URL 연결 실패, 다른 포트 시도...', err);
       }
     }
     
@@ -116,9 +116,10 @@ const FileManager: React.FC<FileManagerProps> = ({ darkMode, serverConnected, se
         console.log(`서버 연결 성공 (포트 ${port}):`, response.data);
         setApiBaseUrl(`${baseUrl}/api/v1`);
         setServerConnected(true);
+        console.log(`서버 연결 상태 설정: true, API 기본 URL: ${baseUrl}/api/v1`);
         return;
       } catch (err) {
-        console.warn(`포트 ${port} 연결 실패`);
+        console.warn(`포트 ${port} 연결 실패:`, err);
       }
     }
     

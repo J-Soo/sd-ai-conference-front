@@ -64,13 +64,43 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
 
     try {
       if (serverConnected) {
-        // 실제 백엔드 API 호출 (구현 예정)
-        // const response = await axios.get('/api/scripts');
-        // setScripts(response.data);
-        
-        // 임시로 더미 데이터 사용
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setScripts(dummyScripts);
+        // 백엔드 API 호출
+        try {
+          const response = await fetch('http://localhost:8000/api/v1/generation/scripts', {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
+          });
+          
+          if (response.status === 404) {
+            // 404 오류는 API가 아직 구현되지 않았다는 의미로 해석
+            setError("대본 목록 API가 아직 구현되지 않았습니다");
+            setScripts([]);
+            return;
+          } else if (!response.ok) {
+            throw new Error(`API 오류: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          console.log('서버에서 받은 스크립트 데이터:', data);
+          
+          // 응답 데이터 구조에 따라 적절히 처리
+          if (Array.isArray(data)) {
+            setScripts(data);
+          } else if (data.scripts && Array.isArray(data.scripts)) {
+            setScripts(data.scripts);
+          } else {
+            throw new Error('API 응답이 예상 형식이 아닙니다');
+          }
+        } catch (err: any) {
+          console.error('스크립트 API 호출 오류:', err);
+          // 404 오류는 이미 위에서 처리했으므로 여기서는 다른 오류만 처리
+          if (!err.message.includes('404')) {
+            setError(`스크립트를 불러오는 중 오류가 발생했습니다: ${err.message}`);
+          }
+          setScripts([]);  // 빈 배열로 설정
+        }
       } else {
         // 테스트 모드: 더미 데이터 사용
         await new Promise(resolve => setTimeout(resolve, 1000)); // 로딩 시뮬레이션
@@ -78,12 +108,27 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
       }
     } catch (err: any) {
       console.error('스크립트 로드 오류:', err);
-      setError('스크립트를 불러오는 중 오류가 발생했습니다.');
-      // 오류 시에도 더미 데이터 표시
-      setScripts(dummyScripts);
+      setError(`스크립트를 불러오는 중 오류가 발생했습니다: ${err.message}`);
+      setScripts([]);  // 빈 배열로 설정
     } finally {
       setLoadingScripts(false);
     }
+  };
+
+  // 더미 오디오 생성 시뮬레이션 함수
+  const simulateDummyAudio = async () => {
+    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
+    
+    const dummyAudio: AudioGeneration = {
+      id: 'test_audio_' + Date.now(),
+      script_id: selectedScript!.id,
+      audio_url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // 테스트용 오디오
+      status: 'completed',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    setAudioGeneration(dummyAudio);
   };
 
   const handleGenerateAudio = async () => {
@@ -94,40 +139,107 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
 
     try {
       if (serverConnected) {
-        // 실제 API 호출 (구현 예정)
-        // const response = await generateAudioAPI(selectedScript.id);
-        
-        // 임시로 더미 처리
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        const dummyAudio: AudioGeneration = {
-          id: 'audio_' + Date.now(),
-          script_id: selectedScript.id,
-          audio_url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // 테스트용 오디오
-          status: 'completed',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        setAudioGeneration(dummyAudio);
+        // 실제 API 호출
+        try {
+          const response = await fetch(`http://localhost:8000/api/v1/generation/audio/${selectedScript.id}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+              script_id: selectedScript.id,
+            }),
+          });
+          
+          if (response.status === 404) {
+            // 404 오류는 API가 아직 구현되지 않았다는 의미로 해석
+            setError("음성 생성 API가 아직 구현되지 않았습니다");
+            setAudioGeneration(null);
+            return;
+          } else if (!response.ok) {
+            throw new Error(`API 오류: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          console.log('음성 생성 응답:', data);
+          
+          // 음성 생성 작업이 비동기인 경우 상태 확인 후 결과 가져오기
+          if (data.generation_id) {
+            // 상태 확인 (폴링)
+            let isCompleted = false;
+            let audioData = null;
+            
+            while (!isCompleted) {
+              // 2초 대기
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              
+              // 상태 확인 API 호출
+              const statusResponse = await fetch(`http://localhost:8000/api/v1/generation/audio/status/${data.generation_id}`);
+              if (statusResponse.status === 404) {
+                throw new Error("상태 확인 API가 아직 구현되지 않았습니다");
+              } else if (!statusResponse.ok) {
+                throw new Error('상태 확인 API 오류');
+              }
+              
+              const statusData = await statusResponse.json();
+              console.log('음성 생성 상태:', statusData);
+              
+              if (statusData.status === 'completed') {
+                isCompleted = true;
+                
+                // 결과 가져오기
+                const resultResponse = await fetch(`http://localhost:8000/api/v1/generation/audio/result/${data.generation_id}`);
+                if (resultResponse.status === 404) {
+                  throw new Error("결과 조회 API가 아직 구현되지 않았습니다");
+                } else if (!resultResponse.ok) {
+                  throw new Error('결과 조회 API 오류');
+                }
+                
+                audioData = await resultResponse.json();
+              } else if (statusData.status === 'failed') {
+                throw new Error('음성 생성에 실패했습니다.');
+              }
+            }
+            
+            if (audioData) {
+              setAudioGeneration({
+                id: audioData.id || data.generation_id,
+                script_id: selectedScript.id,
+                audio_url: audioData.audio_url,
+                status: 'completed',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+            } else {
+              throw new Error('음성 생성 결과를 찾을 수 없습니다.');
+            }
+          } else if (data.audio_url) {
+            // 즉시 결과를 반환하는 경우
+            setAudioGeneration({
+              id: data.id || `audio_${Date.now()}`,
+              script_id: selectedScript.id,
+              audio_url: data.audio_url,
+              status: 'completed',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          } else {
+            throw new Error('API 응답에 필요한 데이터가 없습니다.');
+          }
+        } catch (err: any) {
+          console.error('음성 생성 API 오류:', err);
+          setError(`음성 생성 중 오류가 발생했습니다: ${err.message}`);
+          setAudioGeneration(null);
+        }
       } else {
         // 테스트 모드: 더미 오디오 생성 시뮬레이션
-        await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
-        
-        const dummyAudio: AudioGeneration = {
-          id: 'test_audio_' + Date.now(),
-          script_id: selectedScript.id,
-          audio_url: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // 테스트용 오디오
-          status: 'completed',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        setAudioGeneration(dummyAudio);
+        await simulateDummyAudio();
       }
     } catch (err: any) {
       console.error('음성 생성 오류:', err);
-      setError('음성 생성 중 오류가 발생했습니다.');
+      setError(`음성 생성 중 오류가 발생했습니다: ${err.message}`);
+      setAudioGeneration(null);
     } finally {
       setIsLoading(false);
     }
