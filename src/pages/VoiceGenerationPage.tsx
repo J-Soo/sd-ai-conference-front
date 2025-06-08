@@ -324,7 +324,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="animate-spin" size={18} />
+                      <Loader2 className="animate-spin\" size={18} />
                       <span>음성 생성 중...</span>
                     </>
                   ) : (
