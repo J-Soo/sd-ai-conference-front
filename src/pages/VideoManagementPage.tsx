@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Play, Download, Loader2, FileText, Calendar, Clock, Save, RotateCcw, Video, Image as ImageIcon, User } from 'lucide-react';
-import { Script, ScriptSegment, VideoSegmentCustomization, VideoGeneration } from '../types';
+import { ArrowLeft, ArrowRight, Play, Download, Loader2, FileText, Calendar, Clock, Save, RotateCcw, Video, Image as ImageIcon, User, Check } from 'lucide-react';
+import { Script, ScriptSegment, VideoSegmentCustomization, VideoGeneration, Avatar } from '../types';
 import { formatDate } from '../utils';
 import ImageUploader from '../components/ImageUploader';
 import axios from 'axios';
@@ -23,6 +23,11 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
   const [customization, setCustomization] = useState<VideoSegmentCustomization | null>(null);
   const [videoGenerations, setVideoGenerations] = useState<VideoGeneration[]>([]);
   const [selectedVideoGeneration, setSelectedVideoGeneration] = useState<VideoGeneration | null>(null);
+  const [avatars, setAvatars] = useState<Avatar[]>([]);
+  const [globalAvatarSettings, setGlobalAvatarSettings] = useState({
+    selectedAvatarId: '',
+    applyToAll: true
+  });
   
   // UI 상태
   const [showSegments, setShowSegments] = useState(false);
@@ -52,6 +57,33 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
       duration_minutes: 3,
       created_at: '2024-01-14T14:20:00Z',
       updated_at: '2024-01-14T14:20:00Z'
+    }
+  ];
+
+  const dummyAvatars: Avatar[] = [
+    {
+      id: 'avatar_1',
+      name: '전문가 아바타',
+      image_url: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      description: '비즈니스 전문가 스타일'
+    },
+    {
+      id: 'avatar_2',
+      name: '친근한 아바타',
+      image_url: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      description: '친근하고 따뜻한 스타일'
+    },
+    {
+      id: 'avatar_3',
+      name: '학술적 아바타',
+      image_url: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      description: '학술적이고 신뢰감 있는 스타일'
+    },
+    {
+      id: 'avatar_4',
+      name: '열정적 아바타',
+      image_url: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      description: '에너지 넘치고 열정적인 스타일'
     }
   ];
 
@@ -85,6 +117,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
   // 스크립트 목록 로드
   useEffect(() => {
     loadScripts();
+    loadAvatars();
   }, []);
 
   const loadScripts = async () => {
@@ -119,6 +152,27 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
       setScripts([]);
     } finally {
       setLoadingScripts(false);
+    }
+  };
+
+  const loadAvatars = async () => {
+    try {
+      if (serverConnected) {
+        try {
+          const response = await axios.get('http://localhost:8000/api/v1/avatars');
+          if (response.data && Array.isArray(response.data)) {
+            setAvatars(response.data);
+          } else {
+            setAvatars(dummyAvatars);
+          }
+        } catch (apiError: any) {
+          setAvatars(dummyAvatars);
+        }
+      } else {
+        setAvatars(dummyAvatars);
+      }
+    } catch (err: any) {
+      setAvatars(dummyAvatars);
     }
   };
 
@@ -175,6 +229,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
       id: `custom_${segment.id}`,
       segment_id: segment.id,
       use_avatar: false,
+      selected_avatar_id: globalAvatarSettings.applyToAll ? globalAvatarSettings.selectedAvatarId : '',
       custom_prompt: `${segment.content}에 대한 영상을 생성해주세요. 전문적이고 깔끔한 스타일로 제작해주세요.`,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -208,13 +263,52 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
   // 아바타 사용 토글
   const handleAvatarToggle = (useAvatar: boolean) => {
     if (customization) {
-      setCustomization({
+      const updatedCustomization = {
         ...customization,
         use_avatar: useAvatar,
         custom_image: useAvatar ? undefined : customization.custom_image,
         custom_image_url: useAvatar ? undefined : customization.custom_image_url,
+        selected_avatar_id: useAvatar && globalAvatarSettings.applyToAll ? globalAvatarSettings.selectedAvatarId : customization.selected_avatar_id,
+        updated_at: new Date().toISOString()
+      };
+      
+      setCustomization(updatedCustomization);
+    }
+  };
+
+  // 아바타 선택 핸들러
+  const handleAvatarSelect = (avatarId: string) => {
+    if (customization) {
+      setCustomization({
+        ...customization,
+        selected_avatar_id: avatarId,
         updated_at: new Date().toISOString()
       });
+    }
+
+    // 일괄 적용이 활성화된 경우 글로벌 설정 업데이트
+    if (globalAvatarSettings.applyToAll) {
+      setGlobalAvatarSettings(prev => ({
+        ...prev,
+        selectedAvatarId: avatarId
+      }));
+    }
+  };
+
+  // 일괄 적용 토글
+  const handleApplyToAllToggle = (applyToAll: boolean) => {
+    setGlobalAvatarSettings(prev => ({
+      ...prev,
+      applyToAll
+    }));
+
+    // 일괄 적용이 활성화되고 현재 아바타가 선택되어 있다면 현재 세그먼트의 아바타를 글로벌로 설정
+    if (applyToAll && customization?.selected_avatar_id) {
+      setGlobalAvatarSettings(prev => ({
+        ...prev,
+        selectedAvatarId: customization.selected_avatar_id || '',
+        applyToAll: true
+      }));
     }
   };
 
@@ -244,9 +338,9 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
       }
       
       // 성공 메시지 표시 (선택사항)
-      console.log('커스터마이제이션이 저장되었습니다.');
+      console.log('세그먼트 옵션이 저장되었습니다.');
     } catch (err: any) {
-      setError('커스터마이제이션 저장 중 오류가 발생했습니다.');
+      setError('세그먼트 옵션 저장 중 오류가 발생했습니다.');
     } finally {
       setSavingCustomization(false);
     }
@@ -470,12 +564,12 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
             </div>
           </div>
 
-          {/* 오른쪽: 세그먼트 커스터마이제이션 */}
+          {/* 오른쪽: 세그먼트 옵션 */}
           <div className="h-[600px]">
             <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
               <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">세그먼트 커스터마이제이션</h3>
+                  <h3 className="text-lg font-semibold">세그먼트 옵션</h3>
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -509,16 +603,70 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                       </p>
                     </div>
 
-                    {/* 이미지 업로드 영역 */}
-                    <div>
-                      <h5 className="font-medium mb-3">이미지 업로드</h5>
-                      <ImageUploader
-                        onImageSelected={handleImageSelected}
-                        darkMode={darkMode}
-                        disabled={customization?.use_avatar}
-                        currentImage={customization?.custom_image_url}
-                      />
-                    </div>
+                    {/* 이미지 업로드 또는 아바타 선택 영역 */}
+                    {customization?.use_avatar ? (
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="font-medium">아바타 선택</h5>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id="applyToAll"
+                              checked={globalAvatarSettings.applyToAll}
+                              onChange={(e) => handleApplyToAllToggle(e.target.checked)}
+                              className="rounded"
+                            />
+                            <label htmlFor="applyToAll" className="text-sm">
+                              일괄 적용
+                            </label>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {avatars.map((avatar) => (
+                            <div
+                              key={avatar.id}
+                              onClick={() => handleAvatarSelect(avatar.id)}
+                              className={`relative p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                customization.selected_avatar_id === avatar.id
+                                  ? darkMode 
+                                    ? 'border-purple-500 bg-purple-900/20' 
+                                    : 'border-purple-500 bg-purple-50'
+                                  : darkMode
+                                    ? 'border-gray-600 hover:border-gray-500 bg-gray-700/50 hover:bg-gray-700'
+                                    : 'border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100'
+                              }`}
+                            >
+                              {customization.selected_avatar_id === avatar.id && (
+                                <div className={`absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center ${
+                                  darkMode ? 'bg-purple-500' : 'bg-purple-600'
+                                }`}>
+                                  <Check size={12} className="text-white" />
+                                </div>
+                              )}
+                              <img
+                                src={avatar.image_url}
+                                alt={avatar.name}
+                                className="w-full h-20 object-cover rounded-lg mb-2"
+                              />
+                              <h6 className="font-medium text-sm mb-1">{avatar.name}</h6>
+                              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {avatar.description}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <h5 className="font-medium mb-3">이미지 업로드</h5>
+                        <ImageUploader
+                          onImageSelected={handleImageSelected}
+                          darkMode={darkMode}
+                          disabled={customization?.use_avatar}
+                          currentImage={customization?.custom_image_url}
+                        />
+                      </div>
+                    )}
 
                     {/* 기본 프롬프트 영역 */}
                     <div>
@@ -751,7 +899,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
             }`}
           >
             <ArrowLeft size={16} />
-            <span>커스터마이제이션으로 돌아가기</span>
+            <span>세그먼트 옵션으로 돌아가기</span>
           </button>
         </div>
       )}

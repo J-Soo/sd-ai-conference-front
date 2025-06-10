@@ -36,10 +36,18 @@ export interface AudioGeneration {
   updated_at: string;
 }
 
+export interface Avatar {
+  id: string;
+  name: string;
+  image_url: string;
+  description?: string;
+}
+
 export interface VideoSegmentCustomization {
   id: string;
   segment_id: string;
   use_avatar: boolean;
+  selected_avatar_id?: string;
   custom_image?: File;
   custom_image_url?: string;
   custom_prompt: string;
