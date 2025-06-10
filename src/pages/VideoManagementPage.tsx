@@ -24,9 +24,12 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
   const [videoGenerations, setVideoGenerations] = useState<VideoGeneration[]>([]);
   const [selectedVideoGeneration, setSelectedVideoGeneration] = useState<VideoGeneration | null>(null);
   const [avatars, setAvatars] = useState<Avatar[]>([]);
+  
+  // 글로벌 아바타 설정 - 일괄 적용이 한 번이라도 저장된 적이 있는지 추적
   const [globalAvatarSettings, setGlobalAvatarSettings] = useState({
     selectedAvatarId: '',
-    applyToAll: true
+    applyToAll: false, // 기본값은 항상 false
+    hasBeenAppliedBefore: false // 이전에 일괄 적용이 저장된 적이 있는지 추적
   });
   
   // UI 상태
@@ -118,6 +121,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
   useEffect(() => {
     loadScripts();
     loadAvatars();
+    loadGlobalAvatarSettings();
   }, []);
 
   const loadScripts = async () => {
@@ -176,6 +180,40 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     }
   };
 
+  // 글로벌 아바타 설정 로드 (이전에 일괄 적용이 저장된 적이 있는지 확인)
+  const loadGlobalAvatarSettings = async () => {
+    try {
+      if (serverConnected) {
+        try {
+          const response = await axios.get('http://localhost:8000/api/v1/video/global-avatar-settings');
+          if (response.data) {
+            setGlobalAvatarSettings({
+              selectedAvatarId: response.data.selectedAvatarId || '',
+              applyToAll: response.data.hasBeenAppliedBefore || false, // 이전에 저장된 적이 있으면 true
+              hasBeenAppliedBefore: response.data.hasBeenAppliedBefore || false
+            });
+          }
+        } catch (apiError: any) {
+          // API가 없거나 오류인 경우 기본값 유지 (모두 false)
+          console.log('글로벌 아바타 설정 API 없음 - 기본값 사용');
+        }
+      } else {
+        // 테스트 모드에서는 localStorage에서 확인
+        const savedSettings = localStorage.getItem('globalAvatarSettings');
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings);
+          setGlobalAvatarSettings({
+            selectedAvatarId: parsed.selectedAvatarId || '',
+            applyToAll: parsed.hasBeenAppliedBefore || false, // 이전에 저장된 적이 있으면 true
+            hasBeenAppliedBefore: parsed.hasBeenAppliedBefore || false
+          });
+        }
+      }
+    } catch (err: any) {
+      console.log('글로벌 아바타 설정 로드 실패 - 기본값 사용');
+    }
+  };
+
   // 세그먼트 로드
   const loadSegments = async (scriptId: string) => {
     setLoadingSegments(true);
@@ -229,7 +267,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
       id: `custom_${segment.id}`,
       segment_id: segment.id,
       use_avatar: false,
-      selected_avatar_id: globalAvatarSettings.applyToAll ? globalAvatarSettings.selectedAvatarId : '',
+      selected_avatar_id: globalAvatarSettings.hasBeenAppliedBefore ? globalAvatarSettings.selectedAvatarId : '',
       custom_prompt: `${segment.content}에 대한 영상을 생성해주세요. 전문적이고 깔끔한 스타일로 제작해주세요.`,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -268,7 +306,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
         use_avatar: useAvatar,
         custom_image: useAvatar ? undefined : customization.custom_image,
         custom_image_url: useAvatar ? undefined : customization.custom_image_url,
-        selected_avatar_id: useAvatar && globalAvatarSettings.applyToAll ? globalAvatarSettings.selectedAvatarId : customization.selected_avatar_id,
+        selected_avatar_id: useAvatar && globalAvatarSettings.hasBeenAppliedBefore ? globalAvatarSettings.selectedAvatarId : customization.selected_avatar_id,
         updated_at: new Date().toISOString()
       };
       
@@ -332,9 +370,38 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
       if (serverConnected) {
         // 실제 API 호출
         await axios.post(`http://localhost:8000/api/v1/video/customization`, customization);
+        
+        // 일괄 적용이 체크되어 있다면 글로벌 설정도 저장
+        if (globalAvatarSettings.applyToAll) {
+          await axios.post('http://localhost:8000/api/v1/video/global-avatar-settings', {
+            selectedAvatarId: globalAvatarSettings.selectedAvatarId,
+            hasBeenAppliedBefore: true
+          });
+          
+          // 로컬 상태 업데이트
+          setGlobalAvatarSettings(prev => ({
+            ...prev,
+            hasBeenAppliedBefore: true
+          }));
+        }
       } else {
         // 테스트 모드
         await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 일괄 적용이 체크되어 있다면 localStorage에 저장
+        if (globalAvatarSettings.applyToAll) {
+          const settingsToSave = {
+            selectedAvatarId: globalAvatarSettings.selectedAvatarId,
+            hasBeenAppliedBefore: true
+          };
+          localStorage.setItem('globalAvatarSettings', JSON.stringify(settingsToSave));
+          
+          // 로컬 상태 업데이트
+          setGlobalAvatarSettings(prev => ({
+            ...prev,
+            hasBeenAppliedBefore: true
+          }));
+        }
       }
       
       // 성공 메시지 표시 (선택사항)
