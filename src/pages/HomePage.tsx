@@ -91,7 +91,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         key={item.id}
         onClick={() => onNavigate(item.id)}
         className={`group cursor-pointer rounded-xl border-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg
-          w-96 h-[28rem] p-10 flex flex-col
+          w-96 h-[28rem] p-10 pb-12 flex flex-col
           ${colors.bg} ${colors.border}`}
       >
         <div className="flex items-start justify-between mb-8">
@@ -112,7 +112,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
           {item.description}
         </p>
         
-        <div className="mt-auto">
+        <div className="mt-auto mb-4">
           <h4 className={`font-semibold text-sm uppercase tracking-wide mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             주요 기능
           </h4>
