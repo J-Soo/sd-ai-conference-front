@@ -295,6 +295,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           {/* 왼쪽: 파일 업로드 및 생성 결과 */}
           <Panel defaultSize={50} minSize={30} className="pr-2">
             <div className="h-full flex flex-col space-y-4">
+            <div className="h-full flex flex-col space-y-4">
               {/* 파일 업로드 영역 (50%) */}
               <div className="h-1/2">
                 <FileManager 
