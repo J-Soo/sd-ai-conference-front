@@ -63,7 +63,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
     <div
       onClick={() => onNavigate(id)}
       className={`group cursor-pointer rounded-xl border-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg
-        w-96 h-[28rem] p-10 pb-16 flex flex-col
+        w-96 h-[28rem] p-10 pb-16 flex flex-col mb-12
         ${colors.bg} ${colors.border}`}
     >
       <div className="flex items-start justify-between mb-8">
