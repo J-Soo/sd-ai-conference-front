@@ -371,7 +371,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           <Panel defaultSize={50} minSize={30} className="pl-2">
             <div className="space-y-4">
               {/* 대본 목록 영역 - 고정 높이 500px */}
-              <div className="h-[200px]">
+              <div className="h-[500px]">
                 <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
                   <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <div className="flex items-center justify-between">
