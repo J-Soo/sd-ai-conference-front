@@ -312,7 +312,20 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                 
                 <Panel defaultSize={50} minSize={30} className="pt-2">
                   <div className="h-full overflow-auto">
-                    {/* 생성 결과 영역은 FileManager 내부에 포함되어 있으므로 여기서는 빈 공간 */}
+                    {/* 생성 결과 영역 - 별도 컴포넌트로 분리 */}
+                    <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
+                      <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                        <h3 className="text-lg font-semibold">생성 결과</h3>
+                      </div>
+                      <div className="p-6 h-[calc(100%-5rem)] overflow-y-auto">
+                        <div className="flex flex-col items-center justify-center py-8 h-full">
+                          <FileText className={`mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={32} />
+                          <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                            파일을 업로드하고 대본을 생성하면 결과가 여기에 표시됩니다
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </Panel>
               </PanelGroup>
@@ -331,7 +344,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           <Panel defaultSize={50} minSize={30} className="pl-2">
             <div className="h-full">
               <PanelGroup direction="vertical">
-                <Panel defaultSize={50} minSize={30} className="pb-2">
+                <Panel defaultSize={60} minSize={30} className="pb-2">
                   <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
                     <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                       <div className="flex items-center justify-between">
@@ -532,7 +545,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                   } transition-colors duration-200`} />
                 </PanelResizeHandle>
 
-                <Panel defaultSize={50} minSize={30} className="pt-2">
+                <Panel defaultSize={40} minSize={30} className="pt-2">
                   <ScriptSegmentViewer 
                     selectedScript={selectedScript}
                     darkMode={darkMode}
