@@ -296,8 +296,8 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           {/* 왼쪽 열 */}
           <Panel defaultSize={50} minSize={30} className="pr-2">
             <div className="space-y-4">
-              {/* 파일 업로드 영역 - 고정 높이 400px */}
-              <div className="h-[400px]">
+              {/* 파일 업로드 영역 - 내부 요소에 맞춘 높이 */}
+              <div className="h-[520px]">
                 <FileManager 
                   darkMode={darkMode} 
                   serverConnected={serverConnected}
@@ -418,7 +418,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                   }`}
                                   title={`선택된 ${selectedScriptIds.size}개 삭제`}
                                 >
-                                  {isDeleting ? <Loader2 className="animate-spin\" size={16} /> : <Trash2 size={16} />}
+                                  {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                                 </button>
                               )}
                               
@@ -550,7 +550,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                   title="대본 삭제"
                                 >
                                   {isDeleting && deletingScriptId === script.id ? 
-                                    <Loader2 className="animate-spin\" size={14} /> : 
+                                    <Loader2 className="animate-spin" size={14} /> : 
                                     <Trash2 size={14} />
                                   }
                                 </button>
@@ -564,8 +564,8 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                 </div>
               </div>
 
-              {/* 대본 세그먼트 영역 - 고정 높이 600px */}
-              <div className="h-[600px]">
+              {/* 대본 세그먼트 영역 - 고정 높이 720px */}
+              <div className="h-[720px]">
                 <ScriptSegmentViewer 
                   selectedScript={selectedScript}
                   darkMode={darkMode}
@@ -617,7 +617,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
@@ -666,7 +666,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
