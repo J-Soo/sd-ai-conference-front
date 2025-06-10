@@ -290,42 +290,25 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
         </div>
       )}
 
-      <div className="h-[600px]">
+      <div className="h-[calc(100vh-200px)]">
         <PanelGroup direction="horizontal" className="h-full">
           {/* 왼쪽: 파일 업로드 및 생성 결과 */}
           <Panel defaultSize={50} minSize={30} className="pr-2">
             <div className="h-full flex flex-col">
-              {/* 파일 업로드 영역 - 고정 높이 300px */}
-              <div className="h-[300px] mb-4">
-                <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
-                  <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-semibold">파일 업로드</h2>
-                      {!serverConnected && (
-                        <div className="flex items-center space-x-2">
-                          <TestTube className={`${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} size={16} />
-                          <span className={`text-sm ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                            테스트 모드
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="p-6 h-[calc(100%-5rem)]">
-                    <FileManager 
-                      darkMode={darkMode} 
-                      serverConnected={serverConnected}
-                      setServerConnected={setServerConnected}
-                      onNavigateToVoiceGeneration={onNavigateToVoiceGeneration}
-                      onScriptGenerated={loadScripts}
-                      onGenerationResult={handleGenerationResult}
-                    />
-                  </div>
-                </div>
+              {/* 파일 업로드 영역 - 고정 높이 */}
+              <div className="flex-1 mb-4">
+                <FileManager 
+                  darkMode={darkMode} 
+                  serverConnected={serverConnected}
+                  setServerConnected={setServerConnected}
+                  onNavigateToVoiceGeneration={onNavigateToVoiceGeneration}
+                  onScriptGenerated={loadScripts}
+                  onGenerationResult={handleGenerationResult}
+                />
               </div>
               
-              {/* 생성 결과 영역 - 고정 높이 296px */}
-              <div className="h-[296px]">
+              {/* 생성 결과 영역 - 고정 높이 */}
+              <div className="flex-1">
                 <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
                   <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <div className="flex items-center justify-between">
@@ -386,8 +369,8 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           {/* 오른쪽: 대본 목록 및 세그먼트 뷰어 */}
           <Panel defaultSize={50} minSize={30} className="pl-2">
             <div className="h-full flex flex-col">
-              {/* 대본 목록 영역 - 고정 높이 360px */}
-              <div className="h-[360px] mb-4">
+              {/* 대본 목록 영역 - 고정 높이 */}
+              <div className="flex-[3] mb-4">
                 <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
                   <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <div className="flex items-center justify-between">
@@ -580,8 +563,8 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                 </div>
               </div>
 
-              {/* 대본 세그먼트 영역 - 고정 높이 236px */}
-              <div className="h-[236px]">
+              {/* 대본 세그먼트 영역 - 고정 높이 */}
+              <div className="flex-[2]">
                 <ScriptSegmentViewer 
                   selectedScript={selectedScript}
                   darkMode={darkMode}

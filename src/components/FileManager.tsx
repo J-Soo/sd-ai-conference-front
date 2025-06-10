@@ -312,76 +312,89 @@ ${randomResponse}
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <FileUploader onFilesAdded={handleFilesAdded} darkMode={darkMode} />
-      
-      {error && (
-        <div className="mt-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-md">
-          {error}
-        </div>
-      )}
-      
-      <div className="mt-6 flex-1 flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">업로드된 파일</h3>
-          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            {files.length}개의 파일
-          </span>
-        </div>
-        
-        <div className="flex-1 min-h-0">
-          <FileList files={files} onRemove={handleFileRemove} darkMode={darkMode} />
-        </div>
-        
-        <div className="mt-4">
-          <label className="block text-sm font-medium mb-2">
-            발표 시간 (분)
-          </label>
-          <div className="flex items-center">
-            <Clock className={`mr-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
-            <input
-              type="number"
-              min="1"
-              value={durationMinutes}
-              onChange={handleDurationChange}
-              className={`w-full p-2 rounded-md border ${
-                darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-gray-200' 
-                  : 'bg-white border-gray-300 text-gray-800'
-              }`}
-            />
-          </div>
-          <p className={`mt-1 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            발표 예상 시간을 분 단위로 입력하세요. 기본값: 3분
-          </p>
-        </div>
-        
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading || files.length === 0}
-          className={`mt-4 px-5 py-3 rounded-md w-full flex justify-center items-center space-x-2 font-medium transition-colors duration-200
-            ${isLoading 
-              ? `${darkMode ? 'bg-blue-700 text-gray-300' : 'bg-blue-400 text-white'} cursor-not-allowed` 
-              : files.length === 0
-                ? `${darkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-200 text-gray-500'} cursor-not-allowed`
-                : `${darkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'} text-white`
-            }`}
-        >
-          {isLoading ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
-                <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>{serverConnected ? '처리 중...' : '테스트 처리 중...'}</span>
-            </>
-          ) : (
-            <>
-              <Upload size={18} />
-              <span>{serverConnected ? '서버로 전송' : '테스트 실행'}</span>
-            </>
+    <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
+      <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">파일 업로드</h2>
+          {!serverConnected && (
+            <div className="flex items-center space-x-2">
+              <TestTube className={`${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} size={16} />
+              <span className={`text-sm ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                테스트 모드
+              </span>
+            </div>
           )}
-        </button>
+        </div>
+      </div>
+      <div className="p-6 h-[calc(100%-5rem)] overflow-y-auto">
+        <FileUploader onFilesAdded={handleFilesAdded} darkMode={darkMode} />
+        
+        {error && (
+          <div className="mt-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-md">
+            {error}
+          </div>
+        )}
+        
+        <div className="mt-8">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">업로드된 파일</h3>
+            <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              {files.length}개의 파일
+            </span>
+          </div>
+          
+          <FileList files={files} onRemove={handleFileRemove} darkMode={darkMode} />
+          
+          <div className="mt-6">
+            <label className="block text-sm font-medium mb-2">
+              발표 시간 (분)
+            </label>
+            <div className="flex items-center">
+              <Clock className={`mr-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
+              <input
+                type="number"
+                min="1"
+                value={durationMinutes}
+                onChange={handleDurationChange}
+                className={`w-full p-2 rounded-md border ${
+                  darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                    : 'bg-white border-gray-300 text-gray-800'
+                }`}
+              />
+            </div>
+            <p className={`mt-1 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              발표 예상 시간을 분 단위로 입력하세요. 기본값: 3분
+            </p>
+          </div>
+          
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading || files.length === 0}
+            className={`mt-6 px-5 py-3 rounded-md w-full flex justify-center items-center space-x-2 font-medium transition-colors duration-200
+              ${isLoading 
+                ? `${darkMode ? 'bg-blue-700 text-gray-300' : 'bg-blue-400 text-white'} cursor-not-allowed` 
+                : files.length === 0
+                  ? `${darkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-200 text-gray-500'} cursor-not-allowed`
+                  : `${darkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'} text-white`
+              }`}
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
+                  <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{serverConnected ? '처리 중...' : '테스트 처리 중...'}</span>
+              </>
+            ) : (
+              <>
+                <Upload size={18} />
+                <span>{serverConnected ? '서버로 전송' : '테스트 실행'}</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
