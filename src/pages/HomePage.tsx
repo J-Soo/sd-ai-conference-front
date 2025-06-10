@@ -91,35 +91,35 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         key={item.id}
         onClick={() => onNavigate(item.id)}
         className={`group cursor-pointer rounded-xl border-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg
-          w-80 h-96 p-8 flex flex-col
+          w-96 h-[28rem] p-10 flex flex-col
           ${colors.bg} ${colors.border}`}
       >
-        <div className="flex items-start justify-between mb-6">
-          <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-            <IconComponent className={colors.icon} size={32} />
+        <div className="flex items-start justify-between mb-8">
+          <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+            <IconComponent className={colors.icon} size={36} />
           </div>
           <ArrowRight 
             className={`transition-all duration-300 transform group-hover:translate-x-1 ${colors.arrow}`} 
-            size={24} 
+            size={28} 
           />
         </div>
         
-        <h3 className={`font-bold mb-3 text-2xl ${colors.title}`}>
+        <h3 className={`font-bold mb-4 text-2xl ${colors.title}`}>
           {item.title}
         </h3>
         
-        <p className={`mb-6 leading-relaxed text-base flex-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        <p className={`mb-8 leading-relaxed text-lg flex-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           {item.description}
         </p>
         
         <div className="mt-auto">
-          <h4 className={`font-semibold text-sm uppercase tracking-wide mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          <h4 className={`font-semibold text-sm uppercase tracking-wide mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             주요 기능
           </h4>
-          <ul className="space-y-1">
+          <ul className="space-y-2">
             {item.features.map((feature: string, index: number) => (
-              <li key={index} className={`flex items-center text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                <div className={`w-1.5 h-1.5 rounded-full mr-3 ${colors.icon.replace('text-', 'bg-')}`}></div>
+              <li key={index} className={`flex items-center text-base ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <div className={`w-2 h-2 rounded-full mr-3 ${colors.icon.replace('text-', 'bg-')}`}></div>
                 {feature}
               </li>
             ))}
