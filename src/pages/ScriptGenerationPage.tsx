@@ -297,7 +297,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           <Panel defaultSize={50} minSize={30} className="pr-2">
             <div className="space-y-4">
               {/* 파일 업로드 영역 - 내부 요소에 맞춘 높이 */}
-              <div className="h-[520px]">
+              <div className="h-[700px]">
                 <FileManager 
                   darkMode={darkMode} 
                   serverConnected={serverConnected}
