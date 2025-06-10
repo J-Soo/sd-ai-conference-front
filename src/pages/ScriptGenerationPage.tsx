@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, FileText, Loader2, Calendar, Clock, Trash2, CheckSquare, Square, X, AlertCircle } from 'lucide-react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import FileManager from '../components/FileManager';
 import ScriptSegmentViewer from '../components/ScriptSegmentViewer';
 import { Script } from '../types';
@@ -283,219 +284,265 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
         </div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* 왼쪽: 파일 업로드 및 생성 결과 */}
-        <div className="lg:col-span-2 space-y-8">
-          <FileManager 
-            darkMode={darkMode} 
-            serverConnected={serverConnected}
-            setServerConnected={setServerConnected}
-            onNavigateToVoiceGeneration={onNavigateToVoiceGeneration}
-            onScriptGenerated={loadScripts}
-          />
-        </div>
-
-        {/* 오른쪽: 대본 목록 및 세그먼트 뷰어 */}
-        <div className="space-y-8">
-          {/* 대본 목록 */}
-          <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
-            <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">저장된 대본 목록</h3>
-                  {!serverConnected && (
-                    <p className={`text-xs mt-1 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                      테스트 모드 - 더미 데이터 표시 중
-                    </p>
-                  )}
-                </div>
-                
-                {scripts.length > 0 && (
-                  <div className="flex items-center space-x-2">
-                    {isMultiSelectMode && (
-                      <>
-                        <button
-                          onClick={toggleSelectAll}
-                          className={`p-1.5 rounded-md transition-colors duration-200 ${
-                            darkMode 
-                              ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                          }`}
-                          title={selectedScriptIds.size === scripts.length ? "전체 해제" : "전체 선택"}
-                        >
-                          {selectedScriptIds.size === scripts.length ? 
-                            <CheckSquare size={16} /> : 
-                            <Square size={16} />
-                          }
-                        </button>
-                        
-                        {selectedScriptIds.size > 0 && (
-                          <button
-                            onClick={() => setShowDeleteConfirm(true)}
-                            disabled={isDeleting}
-                            className={`p-1.5 rounded-md transition-colors duration-200 ${
-                              isDeleting
-                                ? darkMode 
-                                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : darkMode
-                                  ? 'bg-red-600 hover:bg-red-500 text-white'
-                                  : 'bg-red-600 hover:bg-red-700 text-white'
-                            }`}
-                            title={`선택된 ${selectedScriptIds.size}개 삭제`}
-                          >
-                            {isDeleting ? <Loader2 className="animate-spin\" size={16} /> : <Trash2 size={16} />}
-                          </button>
-                        )}
-                        
-                        <button
-                          onClick={toggleMultiSelectMode}
-                          className={`p-1.5 rounded-md transition-colors duration-200 ${
-                            darkMode 
-                              ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                          }`}
-                          title="선택 모드 종료"
-                        >
-                          <X size={16} />
-                        </button>
-                      </>
-                    )}
-                    
-                    {!isMultiSelectMode && (
-                      <button
-                        onClick={toggleMultiSelectMode}
-                        className={`p-1.5 rounded-md transition-colors duration-200 ${
-                          darkMode 
-                            ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
-                            : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                        }`}
-                        title="다중 선택 모드"
-                      >
-                        <CheckSquare size={16} />
-                      </button>
-                    )}
+      <div className="h-[calc(100vh-200px)]">
+        <PanelGroup direction="horizontal" className="h-full">
+          {/* 왼쪽: 파일 업로드 및 생성 결과 */}
+          <Panel defaultSize={65} minSize={40} className="pr-2">
+            <div className="h-full">
+              <PanelGroup direction="vertical">
+                <Panel defaultSize={50} minSize={30} className="pb-2">
+                  <div className="h-full overflow-auto">
+                    <FileManager 
+                      darkMode={darkMode} 
+                      serverConnected={serverConnected}
+                      setServerConnected={setServerConnected}
+                      onNavigateToVoiceGeneration={onNavigateToVoiceGeneration}
+                      onScriptGenerated={loadScripts}
+                    />
                   </div>
-                )}
-              </div>
+                </Panel>
+                
+                <PanelResizeHandle className={`h-2 flex items-center justify-center group ${
+                  darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-300'
+                } transition-colors duration-200`}>
+                  <div className={`w-12 h-1 rounded-full ${
+                    darkMode ? 'bg-gray-600 group-hover:bg-gray-500' : 'bg-gray-300 group-hover:bg-gray-400'
+                  } transition-colors duration-200`} />
+                </PanelResizeHandle>
+                
+                <Panel defaultSize={50} minSize={30} className="pt-2">
+                  <div className="h-full overflow-auto">
+                    {/* 생성 결과 영역은 FileManager 내부에 포함되어 있으므로 여기서는 빈 공간 */}
+                  </div>
+                </Panel>
+              </PanelGroup>
             </div>
-            <div className="p-6 max-h-96 overflow-y-auto">
-              {loadingScripts ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className={`animate-spin ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={24} />
-                  <span className="ml-2">대본 목록 로드 중...</span>
-                </div>
-              ) : scripts.length === 0 ? (
-                <div className="text-center py-8">
-                  <FileText className={`mx-auto mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={32} />
-                  <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                    저장된 대본이 없습니다
-                  </p>
-                  <p className={`text-sm mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                    파일을 업로드하여 대본을 생성해주세요
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {scripts.map((script) => (
-                    <div
-                      key={script.id}
-                      className={`group p-4 rounded-lg border-2 transition-all duration-200 ${
-                        selectedScript?.id === script.id && !isMultiSelectMode
-                          ? darkMode 
-                            ? 'border-blue-500 bg-blue-900/20' 
-                            : 'border-blue-500 bg-blue-50'
-                          : darkMode
-                            ? 'border-gray-600 hover:border-gray-500 bg-gray-700/50 hover:bg-gray-700'
-                            : 'border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div 
-                          className={`flex-1 ${isMultiSelectMode ? '' : 'cursor-pointer'}`}
-                          onClick={() => {
-                            if (isMultiSelectMode) {
-                              toggleScriptSelection(script.id);
-                            } else {
-                              setSelectedScript(script);
-                            }
-                          }}
-                        >
-                          <div className="flex items-start space-x-3">
-                            {isMultiSelectMode && (
-                              <div className="mt-1">
-                                {selectedScriptIds.has(script.id) ? 
-                                  <CheckSquare className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={18} /> : 
-                                  <Square className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
-                                }
-                              </div>
-                            )}
-                            
-                            <div className="flex-1">
-                              <h4 className="font-medium mb-2">{script.title}</h4>
-                              <div className="flex items-center space-x-4 text-xs">
-                                <div className="flex items-center space-x-1">
-                                  <FileText size={12} />
-                                  <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                    {script.file_name}
-                                  </span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <Clock size={12} />
-                                  <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                    {script.duration_minutes}분
-                                  </span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <Calendar size={12} />
-                                  <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                    {formatDate(script.created_at)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+          </Panel>
+
+          <PanelResizeHandle className={`w-2 flex items-center justify-center group ${
+            darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-300'
+          } transition-colors duration-200`}>
+            <div className={`w-1 h-12 rounded-full ${
+              darkMode ? 'bg-gray-600 group-hover:bg-gray-500' : 'bg-gray-300 group-hover:bg-gray-400'
+            } transition-colors duration-200`} />
+          </PanelResizeHandle>
+
+          {/* 오른쪽: 대본 목록 및 세그먼트 뷰어 */}
+          <Panel defaultSize={35} minSize={25} className="pl-2">
+            <div className="h-full">
+              <PanelGroup direction="vertical">
+                <Panel defaultSize={50} minSize={30} className="pb-2">
+                  <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
+                    <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold">저장된 대본 목록</h3>
+                          {!serverConnected && (
+                            <p className={`text-xs mt-1 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                              테스트 모드 - 더미 데이터 표시 중
+                            </p>
+                          )}
                         </div>
                         
-                        {!isMultiSelectMode && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              showDeleteConfirmation(script);
-                            }}
-                            disabled={isDeleting && deletingScriptId === script.id}
-                            className={`ml-2 p-1.5 rounded-md transition-all duration-200 ${
-                              isDeleting && deletingScriptId === script.id
-                                ? darkMode 
-                                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : darkMode
-                                  ? 'bg-gray-600 text-gray-400 hover:bg-red-600 hover:text-white'
-                                  : 'bg-gray-200 text-gray-500 hover:bg-red-600 hover:text-white'
-                            }`}
-                            title="대본 삭제"
-                          >
-                            {isDeleting && deletingScriptId === script.id ? 
-                              <Loader2 className="animate-spin\" size={14} /> : 
-                              <Trash2 size={14} />
-                            }
-                          </button>
+                        {scripts.length > 0 && (
+                          <div className="flex items-center space-x-2">
+                            {isMultiSelectMode && (
+                              <>
+                                <button
+                                  onClick={toggleSelectAll}
+                                  className={`p-1.5 rounded-md transition-colors duration-200 ${
+                                    darkMode 
+                                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                                      : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                  }`}
+                                  title={selectedScriptIds.size === scripts.length ? "전체 해제" : "전체 선택"}
+                                >
+                                  {selectedScriptIds.size === scripts.length ? 
+                                    <CheckSquare size={16} /> : 
+                                    <Square size={16} />
+                                  }
+                                </button>
+                                
+                                {selectedScriptIds.size > 0 && (
+                                  <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    disabled={isDeleting}
+                                    className={`p-1.5 rounded-md transition-colors duration-200 ${
+                                      isDeleting
+                                        ? darkMode 
+                                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : darkMode
+                                          ? 'bg-red-600 hover:bg-red-500 text-white'
+                                          : 'bg-red-600 hover:bg-red-700 text-white'
+                                    }`}
+                                    title={`선택된 ${selectedScriptIds.size}개 삭제`}
+                                  >
+                                    {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                                  </button>
+                                )}
+                                
+                                <button
+                                  onClick={toggleMultiSelectMode}
+                                  className={`p-1.5 rounded-md transition-colors duration-200 ${
+                                    darkMode 
+                                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                                      : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                  }`}
+                                  title="선택 모드 종료"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </>
+                            )}
+                            
+                            {!isMultiSelectMode && (
+                              <button
+                                onClick={toggleMultiSelectMode}
+                                className={`p-1.5 rounded-md transition-colors duration-200 ${
+                                  darkMode 
+                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                }`}
+                                title="다중 선택 모드"
+                              >
+                                <CheckSquare size={16} />
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+                    <div className="p-6 h-[calc(100%-5rem)] overflow-y-auto">
+                      {loadingScripts ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className={`animate-spin ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={24} />
+                          <span className="ml-2">대본 목록 로드 중...</span>
+                        </div>
+                      ) : scripts.length === 0 ? (
+                        <div className="text-center py-8">
+                          <FileText className={`mx-auto mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={32} />
+                          <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                            저장된 대본이 없습니다
+                          </p>
+                          <p className={`text-sm mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                            파일을 업로드하여 대본을 생성해주세요
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {scripts.map((script) => (
+                            <div
+                              key={script.id}
+                              className={`group p-4 rounded-lg border-2 transition-all duration-200 ${
+                                selectedScript?.id === script.id && !isMultiSelectMode
+                                  ? darkMode 
+                                    ? 'border-blue-500 bg-blue-900/20' 
+                                    : 'border-blue-500 bg-blue-50'
+                                  : darkMode
+                                    ? 'border-gray-600 hover:border-gray-500 bg-gray-700/50 hover:bg-gray-700'
+                                    : 'border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div 
+                                  className={`flex-1 ${isMultiSelectMode ? '' : 'cursor-pointer'}`}
+                                  onClick={() => {
+                                    if (isMultiSelectMode) {
+                                      toggleScriptSelection(script.id);
+                                    } else {
+                                      setSelectedScript(script);
+                                    }
+                                  }}
+                                >
+                                  <div className="flex items-start space-x-3">
+                                    {isMultiSelectMode && (
+                                      <div className="mt-1">
+                                        {selectedScriptIds.has(script.id) ? 
+                                          <CheckSquare className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={18} /> : 
+                                          <Square className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
+                                        }
+                                      </div>
+                                    )}
+                                    
+                                    <div className="flex-1">
+                                      <h4 className="font-medium mb-2">{script.title}</h4>
+                                      <div className="flex items-center space-x-4 text-xs">
+                                        <div className="flex items-center space-x-1">
+                                          <FileText size={12} />
+                                          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                                            {script.file_name}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center space-x-1">
+                                          <Clock size={12} />
+                                          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                                            {script.duration_minutes}분
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center space-x-1">
+                                          <Calendar size={12} />
+                                          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                                            {formatDate(script.created_at)}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {!isMultiSelectMode && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      showDeleteConfirmation(script);
+                                    }}
+                                    disabled={isDeleting && deletingScriptId === script.id}
+                                    className={`ml-2 p-1.5 rounded-md transition-all duration-200 ${
+                                      isDeleting && deletingScriptId === script.id
+                                        ? darkMode 
+                                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : darkMode
+                                          ? 'bg-gray-600 text-gray-400 hover:bg-red-600 hover:text-white'
+                                          : 'bg-gray-200 text-gray-500 hover:bg-red-600 hover:text-white'
+                                    }`}
+                                    title="대본 삭제"
+                                  >
+                                    {isDeleting && deletingScriptId === script.id ? 
+                                      <Loader2 className="animate-spin" size={14} /> : 
+                                      <Trash2 size={14} />
+                                    }
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Panel>
 
-          {/* 대본 세그먼트 뷰어 */}
-          <ScriptSegmentViewer 
-            selectedScript={selectedScript}
-            darkMode={darkMode}
-            serverConnected={serverConnected}
-          />
-        </div>
+                <PanelResizeHandle className={`h-2 flex items-center justify-center group ${
+                  darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-300'
+                } transition-colors duration-200`}>
+                  <div className={`w-12 h-1 rounded-full ${
+                    darkMode ? 'bg-gray-600 group-hover:bg-gray-500' : 'bg-gray-300 group-hover:bg-gray-400'
+                  } transition-colors duration-200`} />
+                </PanelResizeHandle>
+
+                <Panel defaultSize={50} minSize={30} className="pt-2">
+                  <ScriptSegmentViewer 
+                    selectedScript={selectedScript}
+                    darkMode={darkMode}
+                    serverConnected={serverConnected}
+                  />
+                </Panel>
+              </PanelGroup>
+            </div>
+          </Panel>
+        </PanelGroup>
       </div>
 
       {/* 개별 삭제 확인 모달 */}
@@ -538,7 +585,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
@@ -587,7 +634,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (

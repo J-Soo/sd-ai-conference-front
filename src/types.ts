@@ -21,13 +21,10 @@ export interface Script {
 export interface ScriptSegment {
   id: string;
   script_id: string;
-  segment_number: number;
-  title: string;
+  segment_index: number;
   content: string;
-  start_time?: number;
-  end_time?: number;
+  slide_reference?: string;
   created_at: string;
-  updated_at: string;
 }
 
 export interface AudioGeneration {

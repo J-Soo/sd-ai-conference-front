@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ScriptSegment, Script } from '../types';
-import { FileText, Loader2, AlertCircle, Clock, Hash } from 'lucide-react';
+import { FileText, Loader2, AlertCircle, Hash, FileIcon } from 'lucide-react';
 import axios from 'axios';
 
 interface ScriptSegmentViewerProps {
@@ -24,57 +24,42 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
       {
         id: `seg_${scriptId}_1`,
         script_id: scriptId,
-        segment_number: 1,
-        title: '인사 및 소개',
+        segment_index: 1,
         content: '안녕하세요! 오늘 발표할 주제에 대해 말씀드리겠습니다.',
-        start_time: 0,
-        end_time: 15,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        slide_reference: 'slide_01.png',
+        created_at: new Date().toISOString()
       },
       {
         id: `seg_${scriptId}_2`,
         script_id: scriptId,
-        segment_number: 2,
-        title: '핵심 내용 소개',
+        segment_index: 2,
         content: '첫 번째로, 우리가 다룰 핵심 내용은 다음과 같습니다:\n- 현재 시장 상황 분석\n- 새로운 기술 동향\n- 향후 전망과 기회',
-        start_time: 15,
-        end_time: 45,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        slide_reference: 'slide_02.png',
+        created_at: new Date().toISOString()
       },
       {
         id: `seg_${scriptId}_3`,
         script_id: scriptId,
-        segment_number: 3,
-        title: '시장 분석 결과',
+        segment_index: 3,
         content: '두 번째로, 시장 분석 결과를 보면 지난 분기 대비 30% 성장을 기록했습니다. 이는 우리의 예상을 뛰어넘는 결과입니다.',
-        start_time: 45,
-        end_time: 75,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        slide_reference: 'slide_03.png',
+        created_at: new Date().toISOString()
       },
       {
         id: `seg_${scriptId}_4`,
         script_id: scriptId,
-        segment_number: 4,
-        title: '기술 혁신',
+        segment_index: 4,
         content: '세 번째로, 기술 혁신 측면에서 AI와 머신러닝 기술의 도입이 핵심 성공 요인이었습니다.',
-        start_time: 75,
-        end_time: 105,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        slide_reference: null,
+        created_at: new Date().toISOString()
       },
       {
         id: `seg_${scriptId}_5`,
         script_id: scriptId,
-        segment_number: 5,
-        title: '향후 계획 및 마무리',
+        segment_index: 5,
         content: '마지막으로, 앞으로의 계획과 목표에 대해 말씀드리겠습니다. 우리는 다음 분기에 더욱 혁신적인 솔루션을 선보일 예정입니다.\n\n감사합니다.',
-        start_time: 105,
-        end_time: 135,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        slide_reference: 'slide_04.png',
+        created_at: new Date().toISOString()
       }
     ];
     
@@ -132,13 +117,6 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const formatTime = (seconds?: number) => {
-    if (seconds === undefined) return '--:--';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -208,19 +186,21 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
                     <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
                       darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600'
                     }`}>
-                      {segment.segment_number}
+                      {segment.segment_index}
                     </div>
-                    <h5 className="font-medium text-sm">{segment.title}</h5>
+                    <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      세그먼트 {segment.segment_index}
+                    </span>
                   </div>
                   
-                  <div className="flex items-center space-x-2 text-xs">
-                    <div className="flex items-center space-x-1">
-                      <Clock size={12} />
+                  {segment.slide_reference && (
+                    <div className="flex items-center space-x-1 text-xs">
+                      <FileIcon size={12} />
                       <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                        {formatTime(segment.start_time)} - {formatTime(segment.end_time)}
+                        {segment.slide_reference}
                       </span>
                     </div>
-                  </div>
+                  )}
                 </div>
                 
                 <div className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -235,15 +215,13 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
                   <div className="flex items-center space-x-1 text-xs">
                     <Hash size={10} />
                     <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>
-                      세그먼트 {segment.segment_number}
+                      ID: {segment.id}
                     </span>
                   </div>
                   
-                  {segment.start_time !== undefined && segment.end_time !== undefined && (
-                    <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                      {segment.end_time - segment.start_time}초
-                    </span>
-                  )}
+                  <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                    {new Date(segment.created_at).toLocaleDateString('ko-KR')}
+                  </span>
                 </div>
               </div>
             ))}
