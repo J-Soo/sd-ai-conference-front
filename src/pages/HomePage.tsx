@@ -82,7 +82,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
     return colors[color as keyof typeof colors];
   };
 
-  const renderMenuCard = (item: any, size: 'large' | 'small' = 'large') => {
+  const renderMenuCard = (item: any) => {
     const colors = getColorClasses(item.color, darkMode);
     const IconComponent = item.icon;
     
@@ -91,34 +91,34 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         key={item.id}
         onClick={() => onNavigate(item.id)}
         className={`group cursor-pointer rounded-xl border-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg
-          ${size === 'large' ? 'p-8' : 'p-8'}
+          w-80 h-96 p-8 flex flex-col
           ${colors.bg} ${colors.border}`}
       >
-        <div className={`flex items-start justify-between ${size === 'large' ? 'mb-6' : 'mb-6'}`}>
+        <div className="flex items-start justify-between mb-6">
           <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-            <IconComponent className={colors.icon} size={size === 'large' ? 32 : 32} />
+            <IconComponent className={colors.icon} size={32} />
           </div>
           <ArrowRight 
             className={`transition-all duration-300 transform group-hover:translate-x-1 ${colors.arrow}`} 
-            size={size === 'large' ? 24 : 24} 
+            size={24} 
           />
         </div>
         
-        <h3 className={`font-bold mb-3 ${size === 'large' ? 'text-2xl' : 'text-2xl'} ${colors.title}`}>
+        <h3 className={`font-bold mb-3 text-2xl ${colors.title}`}>
           {item.title}
         </h3>
         
-        <p className={`mb-6 leading-relaxed ${size === 'large' ? 'text-base' : 'text-base'} ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        <p className={`mb-6 leading-relaxed text-base flex-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           {item.description}
         </p>
         
-        <div className="space-y-2">
-          <h4 className={`font-semibold text-sm uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+        <div className="mt-auto">
+          <h4 className={`font-semibold text-sm uppercase tracking-wide mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             주요 기능
           </h4>
           <ul className="space-y-1">
             {item.features.map((feature: string, index: number) => (
-              <li key={index} className={`flex items-center ${size === 'large' ? 'text-sm' : 'text-sm'} ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <li key={index} className={`flex items-center text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 <div className={`w-1.5 h-1.5 rounded-full mr-3 ${colors.icon.replace('text-', 'bg-')}`}></div>
                 {feature}
               </li>
@@ -143,25 +143,25 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         </p>
       </div>
 
-      {/* 메인 메뉴 (1열) */}
+      {/* 메인 메뉴 */}
       <div className="space-y-4">
         <div className="flex items-center space-x-2 mb-6">
           <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-blue-500' : 'bg-blue-600'}`}></div>
           <h3 className="text-xl font-bold">메인 메뉴</h3>
         </div>
-        <div className="grid md:grid-cols-3 gap-8">
-          {mainMenuItems.map((item) => renderMenuCard(item, 'large'))}
+        <div className="flex flex-wrap gap-8 justify-start">
+          {mainMenuItems.map((item) => renderMenuCard(item))}
         </div>
       </div>
 
-      {/* 서브 메뉴 (2열) */}
+      {/* 서브 메뉴 */}
       <div className="space-y-4">
         <div className="flex items-center space-x-2 mb-6">
           <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-orange-500' : 'bg-orange-600'}`}></div>
           <h3 className="text-xl font-bold">서브 메뉴</h3>
         </div>
-        <div className="grid md:grid-cols-1 gap-6">
-          {subMenuItems.map((item) => renderMenuCard(item, 'large'))}
+        <div className="flex flex-wrap gap-8 justify-start">
+          {subMenuItems.map((item) => renderMenuCard(item))}
         </div>
       </div>
 
