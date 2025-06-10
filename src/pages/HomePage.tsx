@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Mic, Video, ArrowRight, Sparkles, Volume2 } from 'lucide-react';
+import { FileText, Mic, Video, User, ArrowRight, Sparkles, Volume2 } from 'lucide-react';
 import { PageType } from '../types';
 
 interface HomePageProps {
@@ -32,6 +32,14 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       icon: Video,
       color: 'purple',
       features: ['세그먼트 커스터마이징', '이미지 업로드', '아바타 설정', '영상 생성']
+    },
+    {
+      id: 'avatar-management' as PageType,
+      title: '아바타 관리',
+      description: '영상 생성에 사용할 아바타를 등록하고 관리합니다',
+      icon: User,
+      color: 'orange',
+      features: ['아바타 등록', '이미지 업로드', '아바타 정보 관리', '아바타 삭제']
     }
   ];
 
@@ -57,6 +65,13 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         icon: darkMode ? 'text-purple-400' : 'text-purple-600',
         title: darkMode ? 'text-purple-300' : 'text-purple-700',
         arrow: darkMode ? 'text-purple-400 group-hover:text-purple-300' : 'text-purple-500 group-hover:text-purple-600'
+      },
+      orange: {
+        bg: darkMode ? 'bg-orange-900/20 hover:bg-orange-900/30' : 'bg-orange-50 hover:bg-orange-100',
+        border: darkMode ? 'border-orange-700 hover:border-orange-600' : 'border-orange-200 hover:border-orange-300',
+        icon: darkMode ? 'text-orange-400' : 'text-orange-600',
+        title: darkMode ? 'text-orange-300' : 'text-orange-700',
+        arrow: darkMode ? 'text-orange-400 group-hover:text-orange-300' : 'text-orange-500 group-hover:text-orange-600'
       }
     };
     return colors[color as keyof typeof colors];
@@ -77,7 +92,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       </div>
 
       {/* 메뉴 카드들 */}
-      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
         {menuItems.map((item) => {
           const colors = getColorClasses(item.color, darkMode);
           const IconComponent = item.icon;
@@ -86,35 +101,35 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
             <div
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`group cursor-pointer rounded-xl border-2 p-8 transition-all duration-300 transform hover:scale-105 hover:shadow-lg
+              className={`group cursor-pointer rounded-xl border-2 p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg
                 ${colors.bg} ${colors.border}`}
             >
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex items-start justify-between mb-4">
                 <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-                  <IconComponent className={colors.icon} size={32} />
+                  <IconComponent className={colors.icon} size={28} />
                 </div>
                 <ArrowRight 
                   className={`transition-all duration-300 transform group-hover:translate-x-1 ${colors.arrow}`} 
-                  size={24} 
+                  size={20} 
                 />
               </div>
               
-              <h3 className={`text-2xl font-bold mb-3 ${colors.title}`}>
+              <h3 className={`text-xl font-bold mb-3 ${colors.title}`}>
                 {item.title}
               </h3>
               
-              <p className={`mb-6 leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={`mb-4 leading-relaxed text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 {item.description}
               </p>
               
               <div className="space-y-2">
-                <h4 className={`font-semibold text-sm uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <h4 className={`font-semibold text-xs uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   주요 기능
                 </h4>
                 <ul className="space-y-1">
                   {item.features.map((feature, index) => (
-                    <li key={index} className={`flex items-center text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full mr-3 ${colors.icon.replace('text-', 'bg-')}`}></div>
+                    <li key={index} className={`flex items-center text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full mr-2 ${colors.icon.replace('text-', 'bg-')}`}></div>
                       {feature}
                     </li>
                   ))}
@@ -128,7 +143,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       {/* 워크플로우 섹션 */}
       <div className={`mt-16 p-8 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
         <h3 className="text-xl font-bold mb-6 text-center">워크플로우</h3>
-        <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8">
+        <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-6">
           <div className="flex items-center space-x-3">
             <div className={`p-2 rounded-full ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
               <FileText className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={20} />

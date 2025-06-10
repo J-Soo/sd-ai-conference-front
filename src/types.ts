@@ -41,6 +41,8 @@ export interface Avatar {
   name: string;
   image_url: string;
   description?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface VideoSegmentCustomization {
@@ -64,4 +66,4 @@ export interface VideoGeneration {
   updated_at: string;
 }
 
-export type PageType = 'home' | 'script-generation' | 'voice-generation' | 'video-management';
+export type PageType = 'home' | 'script-generation' | 'voice-generation' | 'video-management' | 'avatar-management';

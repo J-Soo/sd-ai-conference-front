@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import ScriptGenerationPage from './pages/ScriptGenerationPage';
 import VoiceGenerationPage from './pages/VoiceGenerationPage';
 import VideoManagementPage from './pages/VideoManagementPage';
+import AvatarManagementPage from './pages/AvatarManagementPage';
 import { PageType } from './types';
 
 function App() {
@@ -77,6 +78,14 @@ function App() {
             onBack={() => setCurrentPage('home')}
           />
         );
+      case 'avatar-management':
+        return (
+          <AvatarManagementPage
+            darkMode={darkMode}
+            serverConnected={serverConnected}
+            onBack={() => setCurrentPage('home')}
+          />
+        );
       default:
         return (
           <HomePage
@@ -95,6 +104,8 @@ function App() {
         return '음성 관리';
       case 'video-management':
         return '영상 관리';
+      case 'avatar-management':
+        return '아바타 관리';
       default:
         return '관리자 페이지';
     }
