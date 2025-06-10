@@ -55,7 +55,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
       file_name: 'project_status.pdf',
       duration_minutes: 3,
       created_at: '2024-01-14T14:20:00Z',
-      updated_at: '2024-01-14T20:00Z'
+      updated_at: '2024-01-14T14:20:00Z'
     },
     {
       id: '3',
@@ -294,9 +294,9 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
         <PanelGroup direction="horizontal" className="h-full">
           {/* 왼쪽: 파일 업로드 및 생성 결과 */}
           <Panel defaultSize={50} minSize={30} className="pr-2">
-            <div className="h-full flex flex-col">
+            <div className="h-full flex flex-col space-y-4">
               {/* 파일 업로드 영역 - 고정 높이 */}
-              <div className="h-80 mb-4">
+              <div className="h-[400px]">
                 <FileManager 
                   darkMode={darkMode} 
                   serverConnected={serverConnected}
@@ -368,9 +368,9 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
 
           {/* 오른쪽: 대본 목록 및 세그먼트 뷰어 */}
           <Panel defaultSize={50} minSize={30} className="pl-2">
-            <div className="h-full flex flex-col">
+            <div className="h-full flex flex-col space-y-4">
               {/* 대본 목록 영역 - 고정 높이 */}
-              <div className="h-80 mb-4">
+              <div className="h-[400px]">
                 <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
                   <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <div className="flex items-center justify-between">
@@ -417,7 +417,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                   }`}
                                   title={`선택된 ${selectedScriptIds.size}개 삭제`}
                                 >
-                                  {isDeleting ? <Loader2 className="animate-spin\" size={16} /> : <Trash2 size={16} />}
+                                  {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                                 </button>
                               )}
                               
@@ -549,7 +549,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                   title="대본 삭제"
                                 >
                                   {isDeleting && deletingScriptId === script.id ? 
-                                    <Loader2 className="animate-spin\" size={14} /> : 
+                                    <Loader2 className="animate-spin" size={14} /> : 
                                     <Trash2 size={14} />
                                   }
                                 </button>
@@ -616,7 +616,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
@@ -665,7 +665,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
