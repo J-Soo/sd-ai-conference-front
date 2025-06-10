@@ -260,7 +260,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <div className="flex items-center space-x-4">
         <button
           onClick={onBack}
