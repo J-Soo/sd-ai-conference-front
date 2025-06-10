@@ -14,6 +14,7 @@ export interface Script {
   content: string;
   file_name: string;
   duration_minutes: number;
+  duration_seconds?: number;
   created_at: string;
   updated_at: string;
 }

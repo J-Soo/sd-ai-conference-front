@@ -49,6 +49,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
       content: '안녕하세요! 오늘 발표할 주제에 대해 말씀드리겠습니다.',
       file_name: 'marketing_strategy.pptx',
       duration_minutes: 5,
+      duration_seconds: 0,
       created_at: '2024-01-15T10:30:00Z',
       updated_at: '2024-01-15T10:30:00Z'
     },
@@ -58,6 +59,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
       content: '여러분, 반갑습니다! 오늘 준비한 발표 내용은 크게 세 부분으로 구성되어 있습니다.',
       file_name: 'project_status.pdf',
       duration_minutes: 3,
+      duration_seconds: 0,
       created_at: '2024-01-14T14:20:00Z',
       updated_at: '2024-01-14T14:20:00Z'
     }
@@ -65,28 +67,36 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
 
   const dummyAvatars: Avatar[] = [
     {
-      id: 'avatar_1',
-      name: '전문가 아바타',
-      image_url: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      description: '비즈니스 전문가 스타일'
+      id: 'avatar-1',
+      name: '비즈니스맨',
+      image_url: '/avatars/business-man.jpg',
+      description: '비즈니스 프레젠테이션에 적합한 아바타',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
-      id: 'avatar_2',
-      name: '친근한 아바타',
-      image_url: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      description: '친근하고 따뜻한 스타일'
+      id: 'avatar-2',
+      name: '여성 강사',
+      image_url: '/avatars/female-instructor.jpg',
+      description: '교육 및 강의 콘텐츠에 적합한 아바타',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
-      id: 'avatar_3',
-      name: '학술적 아바타',
-      image_url: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      description: '학술적이고 신뢰감 있는 스타일'
+      id: 'avatar-3',
+      name: '테크 전문가',
+      image_url: '/avatars/tech-expert.jpg',
+      description: '기술 관련 프레젠테이션에 적합한 아바타',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
-      id: 'avatar_4',
-      name: '열정적 아바타',
-      image_url: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      description: '에너지 넘치고 열정적인 스타일'
+      id: 'avatar-4',
+      name: '캐주얼 스타일',
+      image_url: '/avatars/casual-style.jpg',
+      description: '친근한 분위기의 콘텐츠에 적합한 아바타',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ];
 
@@ -544,7 +554,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                             <div className="flex items-center space-x-1">
                               <Clock size={12} />
                               <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                {script.duration_minutes}분
+                                {script.duration_minutes}분 {script.duration_seconds || 0}초
                               </span>
                             </div>
                             <div className="flex items-center space-x-1">

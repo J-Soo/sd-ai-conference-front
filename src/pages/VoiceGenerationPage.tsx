@@ -558,7 +558,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                               <div className="flex items-center space-x-1">
                                 <Clock size={12} />
                                 <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                  {script.duration_minutes}분
+                                  {script.duration_minutes}분 {script.duration_seconds || 0}초
                                 </span>
                               </div>
                               <div className="flex items-center space-x-1">
@@ -632,7 +632,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                   </div>
                   <div className="flex items-center space-x-4 mt-3 text-xs">
                     <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                      예상 시간: {selectedScript.duration_minutes}분
+                      예상 시간: {selectedScript.duration_minutes}분 {selectedScript.duration_seconds || 0}초
                     </span>
                     <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
                       글자 수: {selectedScript.content.length}자

@@ -517,7 +517,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                       <div className="flex items-center space-x-1">
                                         <Clock size={12} />
                                         <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                          {script.duration_minutes}분
+                                          {script.duration_minutes}분 {script.duration_seconds || 0}초
                                         </span>
                                       </div>
                                       <div className="flex items-center space-x-1">

@@ -30,6 +30,7 @@ const FileManager: React.FC<FileManagerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [apiBaseUrl, setApiBaseUrl] = useState<string>(import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL);
   const [durationMinutes, setDurationMinutes] = useState<number>(3);
+  const [durationSeconds, setDurationSeconds] = useState<number>(0);
 
   // 더미 응답 데이터
   const DUMMY_RESPONSES = [
@@ -150,8 +151,15 @@ const FileManager: React.FC<FileManagerProps> = ({
 
   const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
-    if (!isNaN(value) && value > 0) {
+    if (!isNaN(value) && value >= 0) {
       setDurationMinutes(value);
+    }
+  };
+
+  const handleDurationSecondsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 0 && value < 60) {
+      setDurationSeconds(value);
     }
   };
 
@@ -171,7 +179,7 @@ const FileManager: React.FC<FileManagerProps> = ({
       // 파일 정보를 포함한 응답 생성
       const fileInfo = files[0];
       const enhancedResponse = `[테스트 모드] 파일: ${fileInfo.name} (${fileInfo.size})
-발표 시간: ${durationMinutes}분
+발표 시간: ${durationMinutes}분 ${durationSeconds}초
 생성 시간: ${new Date().toLocaleString()}
 
 ========================================
@@ -227,11 +235,12 @@ ${randomResponse}
       formData.append('file', mainFile);
       formData.append('style', 'professional'); // 기본 스타일
       formData.append('language', 'ko'); // 기본 언어
-      formData.append('duration_minutes', durationMinutes.toString()); // 발표 시간
+      formData.append('duration_minutes', durationMinutes.toString()); // 발표 시간 (분)
+      formData.append('duration_seconds', durationSeconds.toString()); // 발표 시간 (초)
       
       console.log('API 호출:', `${apiBaseUrl}/scripts/generate`);
       console.log('파일 정보:', mainFile.name, mainFile.type, mainFile.size);
-      console.log('발표 시간:', durationMinutes, '분');
+      console.log('발표 시간:', durationMinutes, '분', durationSeconds, '초');
       
       // 대본 생성 요청 API 호출
       const response = await axios.post(
@@ -355,25 +364,50 @@ ${randomResponse}
           
           <div className="mt-6">
             <label className="block text-sm font-medium mb-2">
-              발표 시간 (분)
+              발표 시간
             </label>
-            <div className="flex items-center">
-              <Clock className={`mr-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
-              <input
-                type="number"
-                min="1"
-                value={durationMinutes}
-                onChange={handleDurationChange}
-                className={`w-full p-2 rounded-md border ${
-                  darkMode 
-                    ? 'bg-gray-700 border-gray-600 text-gray-200' 
-                    : 'bg-white border-gray-300 text-gray-800'
-                }`}
-              />
+            <div className="flex space-x-4">
+              <div className="w-1/2">
+                <div className="flex items-center">
+                  <Clock className={`mr-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
+                  <input
+                    type="number"
+                    min="0"
+                    value={durationMinutes}
+                    onChange={handleDurationChange}
+                    className={`w-20 p-2 rounded-md border ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                        : 'bg-white border-gray-300 text-gray-800'
+                    }`}
+                  />
+                  <span className={`ml-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    분(기본값: 3분)
+                  </span>
+                </div>
+              </div>
+              
+              <div className="w-1/2">
+                <div className="flex items-center">
+                  <Clock className={`mr-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={durationSeconds}
+                    onChange={handleDurationSecondsChange}
+                    className={`w-20 p-2 rounded-md border ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                        : 'bg-white border-gray-300 text-gray-800'
+                    }`}
+                  />
+                  <span className={`ml-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    초(0-59)
+                  </span>
+                </div>
+              </div>
             </div>
-            <p className={`mt-1 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              발표 예상 시간을 분 단위로 입력하세요. 기본값: 3분
-            </p>
           </div>
           
           <button
