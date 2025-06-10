@@ -229,13 +229,13 @@ ${randomResponse}
       formData.append('language', 'ko'); // 기본 언어
       formData.append('duration_minutes', durationMinutes.toString()); // 발표 시간
       
-      console.log('API 호출:', `${apiBaseUrl}/generation/generate-script`);
+      console.log('API 호출:', `${apiBaseUrl}/scripts/generate`);
       console.log('파일 정보:', mainFile.name, mainFile.type, mainFile.size);
       console.log('발표 시간:', durationMinutes, '분');
       
       // 대본 생성 요청 API 호출
       const response = await axios.post(
-        `${apiBaseUrl}/generation/generate-script`,
+        `${apiBaseUrl}/scripts/generate`,
         formData,
         {
           headers: {
@@ -246,8 +246,16 @@ ${randomResponse}
       
       console.log('서버 응답:', response.data);
       
-      // 생성 ID 가져오기
-      const generationId = response.data.generation_id;
+      // 생성 ID 가져오기 (서버는 task_id로 반환)
+      const generationId = response.data.task_id;
+      
+      // 응답값 검증
+      if (!generationId) {
+        console.error('생성 ID를 찾을 수 없습니다:', response.data);
+        setError('서버 응답에서 생성 ID를 찾을 수 없습니다.');
+        setIsLoading(false);
+        return;
+      }
       
       // 대본 생성이 완료될 때까지 상태 확인
       let isCompleted = false;
@@ -258,7 +266,7 @@ ${randomResponse}
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         // 상태 확인 API 호출
-        const statusResponse = await axios.get(`${apiBaseUrl}/generation/status/${generationId}`);
+        const statusResponse = await axios.get(`${apiBaseUrl}/scripts/status/${generationId}`);
         console.log('상태 확인 응답:', statusResponse.data);
         
         generationStatus = statusResponse.data.status;
@@ -277,7 +285,7 @@ ${randomResponse}
       }
       
       // 작업이 완료된 경우 결과 가져오기
-      const resultResponse = await axios.get(`${apiBaseUrl}/generation/result/${generationId}`);
+      const resultResponse = await axios.get(`${apiBaseUrl}/scripts/result/${generationId}`);
       console.log('결과 응답:', resultResponse.data);
       
       // 생성된 대본을 부모 컴포넌트로 전달
@@ -390,7 +398,7 @@ ${randomResponse}
             ) : (
               <>
                 <Upload size={18} />
-                <span>{serverConnected ? '서버로 전송' : '테스트 실행'}</span>
+                <span>{serverConnected ? '대본 생성' : '대본 생성(테스트)'}</span>
               </>
             )}
           </button>

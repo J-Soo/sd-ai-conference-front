@@ -131,7 +131,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     try {
       if (serverConnected) {
         try {
-          const response = await axios.get('http://localhost:8000/api/v1/generation/scripts');
+          const response = await axios.get('http://localhost:8000/api/v1/scripts/all');
           if (response.data && Array.isArray(response.data)) {
             setScripts(response.data);
           } else {
@@ -222,7 +222,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     try {
       if (serverConnected) {
         try {
-          const response = await axios.get(`http://localhost:8000/api/v1/generation/scripts/${scriptId}/segments`);
+          const response = await axios.get(`http://localhost:8000/api/v1/scripts/${scriptId}/segments`);
           if (response.data && Array.isArray(response.data)) {
             setSegments(response.data);
           } else {

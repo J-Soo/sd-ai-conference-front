@@ -76,7 +76,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
       if (serverConnected) {
         // 실제 백엔드 API 호출
         try {
-          const response = await axios.get('http://localhost:8000/api/v1/generation/scripts');
+          const response = await axios.get('http://localhost:8000/api/v1/scripts/all');
           console.log('API 응답:', response.data);
           if (response.data && Array.isArray(response.data)) {
             setScripts(response.data);
@@ -130,7 +130,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
     try {
       if (serverConnected) {
         try {
-          await axios.delete(`http://localhost:8000/api/v1/generation/scripts/${scriptToDelete.id}`);
+          await axios.delete(`http://localhost:8000/api/v1/scripts/${scriptToDelete.id}`);
           
           // 성공적으로 삭제된 경우 로컬 상태 업데이트
           setScripts(prev => prev.filter(script => script.id !== scriptToDelete.id));
@@ -189,7 +189,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
       
       if (serverConnected) {
         try {
-          await axios.delete('http://localhost:8000/api/v1/generation/scripts/bulk', {
+          await axios.delete('http://localhost:8000/api/v1/scripts/bulk', {
             data: { script_ids: scriptIdsArray }
           });
           

@@ -80,7 +80,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
     try {
       if (serverConnected) {
         try {
-          const response = await axios.get('http://localhost:8000/api/v1/generation/scripts');
+          const response = await axios.get('http://localhost:8000/api/v1/scripts/all');
           console.log('API 응답:', response.data);
           if (response.data && Array.isArray(response.data)) {
             setScripts(response.data);
@@ -93,11 +93,11 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           console.error('API 호출 오류:', apiError);
           
           if (apiError.response && apiError.response.status === 404) {
-            setError('스크립트 API가 아직 구현되지 않았습니다.');
+            setError('대본 목록을 찾을 수 없습니다. 서버가 업데이트되었거나 해당 경로가 변경되었습니다.');
             // API가 구현되지 않은 경우에만 임시로 더미 데이터 사용
             setScripts(dummyScripts);
           } else {
-            setError(`서버 오류: ${apiError.message || '알 수 없는 오류'}`);
+            setError(`서버 오류: ${apiError.response?.data?.detail || apiError.message || '알 수 없는 오류'}`);
             setScripts([]);
           }
         }
@@ -131,7 +131,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
     try {
       if (serverConnected) {
         try {
-          await axios.delete(`http://localhost:8000/api/v1/generation/scripts/${scriptToDelete.id}`);
+          await axios.delete(`http://localhost:8000/api/v1/scripts/${scriptToDelete.id}`);
           
           setScripts(prev => prev.filter(script => script.id !== scriptToDelete.id));
           
@@ -143,14 +143,14 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           console.error('API 삭제 오류:', apiError);
           
           if (apiError.response && apiError.response.status === 404) {
-            setError('삭제 API가 아직 구현되지 않았습니다.');
+            setError('대본을 찾을 수 없습니다. 이미 삭제되었거나 존재하지 않습니다.');
             
             setScripts(prev => prev.filter(script => script.id !== scriptToDelete.id));
             if (selectedScript?.id === scriptToDelete.id) {
               setSelectedScript(null);
             }
           } else {
-            setError(`삭제 중 오류 발생: ${apiError.message || '알 수 없는 오류'}`);
+            setError(`삭제 중 오류 발생: ${apiError.response?.data?.detail || apiError.message || '알 수 없는 오류'}`);
           }
         }
       } else {
@@ -183,7 +183,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
       
       if (serverConnected) {
         try {
-          await axios.delete('http://localhost:8000/api/v1/generation/scripts/bulk', {
+          await axios.delete('http://localhost:8000/api/v1/scripts/bulk', {
             data: { script_ids: scriptIdsArray }
           });
           
@@ -197,14 +197,14 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           console.error('API 다중 삭제 오류:', apiError);
           
           if (apiError.response && apiError.response.status === 404) {
-            setError('다중 삭제 API가 아직 구현되지 않았습니다.');
+            setError('일부 대본을 찾을 수 없습니다. 이미 삭제되었거나 존재하지 않는 항목이 있습니다.');
             
             setScripts(prev => prev.filter(script => !selectedScriptIds.has(script.id)));
             if (selectedScript && selectedScriptIds.has(selectedScript.id)) {
               setSelectedScript(null);
             }
           } else {
-            setError(`다중 삭제 중 오류 발생: ${apiError.message || '알 수 없는 오류'}`);
+            setError(`다중 삭제 중 오류 발생: ${apiError.response?.data?.detail || apiError.message || '알 수 없는 오류'}`);
           }
         }
       } else {

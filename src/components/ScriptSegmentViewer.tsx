@@ -50,7 +50,7 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
         script_id: scriptId,
         segment_index: 4,
         content: '세 번째로, 기술 혁신 측면에서 AI와 머신러닝 기술의 도입이 핵심 성공 요인이었습니다.',
-        slide_reference: null,
+        slide_reference: undefined,
         created_at: new Date().toISOString()
       },
       {
@@ -83,25 +83,25 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
     try {
       if (serverConnected) {
         try {
-          const response = await axios.get(`http://localhost:8000/api/v1/generation/scripts/${scriptId}/segments`);
+          const response = await axios.get(`http://localhost:8000/api/v1/scripts/${scriptId}/segments`);
           console.log('세그먼트 API 응답:', response.data);
           
           if (response.data && Array.isArray(response.data)) {
             setSegments(response.data);
           } else {
             console.error('세그먼트 API 응답 형식 오류:', response.data);
-            setError('세그먼트 API에서 유효한 응답을 받지 못했습니다.');
+            setError('세그먼트 API에서 유효한 배열 형식의 응답을 받지 못했습니다.');
             setSegments([]);
           }
         } catch (apiError: any) {
           console.error('세그먼트 API 호출 오류:', apiError);
           
           if (apiError.response && apiError.response.status === 404) {
-            setError('세그먼트 API가 아직 구현되지 않았습니다.');
+            setError('세그먼트를 찾을 수 없습니다. 대본 ID가 유효하지 않거나 세그먼트가 생성되지 않았습니다.');
             // API가 구현되지 않은 경우에만 임시로 더미 데이터 사용
             setSegments(generateDummySegments(scriptId));
           } else {
-            setError(`세그먼트 로드 오류: ${apiError.message || '알 수 없는 오류'}`);
+            setError(`세그먼트 로드 오류: ${apiError.response?.data?.detail || apiError.message || '알 수 없는 오류'}`);
             setSegments([]);
           }
         }
@@ -123,7 +123,7 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
     <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
       <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">대본 세그먼트</h3>
+          <h3 className="text-lg font-semibold">대본 세그먼트 목록</h3>
           {!serverConnected && selectedScript && (
             <div className="flex items-center space-x-1">
               <span className={`text-xs ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
