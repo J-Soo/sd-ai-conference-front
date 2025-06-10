@@ -36,4 +36,24 @@ export interface AudioGeneration {
   updated_at: string;
 }
 
-export type PageType = 'home' | 'script-generation' | 'voice-generation';
+export interface VideoSegmentCustomization {
+  id: string;
+  segment_id: string;
+  use_avatar: boolean;
+  custom_image?: File;
+  custom_image_url?: string;
+  custom_prompt: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VideoGeneration {
+  id: string;
+  segment_id: string;
+  video_url?: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  created_at: string;
+  updated_at: string;
+}
+
+export type PageType = 'home' | 'script-generation' | 'voice-generation' | 'video-management';

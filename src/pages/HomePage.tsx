@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Mic, ArrowRight, Sparkles, Volume2 } from 'lucide-react';
+import { FileText, Mic, Video, ArrowRight, Sparkles, Volume2 } from 'lucide-react';
 import { PageType } from '../types';
 
 interface HomePageProps {
@@ -24,6 +24,14 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       icon: Mic,
       color: 'green',
       features: ['대본 선택', 'TTS 음성 생성', '음성 미리보기', '다운로드']
+    },
+    {
+      id: 'video-management' as PageType,
+      title: '영상 관리',
+      description: '대본 세그먼트별로 영상 생성 옵션을 설정하고 AI 영상을 생성합니다',
+      icon: Video,
+      color: 'purple',
+      features: ['세그먼트 커스터마이징', '이미지 업로드', '아바타 설정', '영상 생성']
     }
   ];
 
@@ -42,6 +50,13 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         icon: darkMode ? 'text-green-400' : 'text-green-600',
         title: darkMode ? 'text-green-300' : 'text-green-700',
         arrow: darkMode ? 'text-green-400 group-hover:text-green-300' : 'text-green-500 group-hover:text-green-600'
+      },
+      purple: {
+        bg: darkMode ? 'bg-purple-900/20 hover:bg-purple-900/30' : 'bg-purple-50 hover:bg-purple-100',
+        border: darkMode ? 'border-purple-700 hover:border-purple-600' : 'border-purple-200 hover:border-purple-300',
+        icon: darkMode ? 'text-purple-400' : 'text-purple-600',
+        title: darkMode ? 'text-purple-300' : 'text-purple-700',
+        arrow: darkMode ? 'text-purple-400 group-hover:text-purple-300' : 'text-purple-500 group-hover:text-purple-600'
       }
     };
     return colors[color as keyof typeof colors];
@@ -57,12 +72,12 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         </div>
         <p className={`text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}>
           PPT/PDF 자료를 업로드하여 AI가 자동으로 발표 대본을 생성하고, 
-          자연스러운 음성으로 변환하는 통합 솔루션입니다.
+          자연스러운 음성과 영상으로 변환하는 통합 솔루션입니다.
         </p>
       </div>
 
       {/* 메뉴 카드들 */}
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {menuItems.map((item) => {
           const colors = getColorClasses(item.color, darkMode);
           const IconComponent = item.icon;
@@ -137,6 +152,15 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
               <Volume2 className={`${darkMode ? 'text-green-400' : 'text-green-600'}`} size={20} />
             </div>
             <span className="font-medium">음성 생성</span>
+          </div>
+          
+          <ArrowRight className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={20} />
+          
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-full ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+              <Video className={`${darkMode ? 'text-purple-400' : 'text-purple-600'}`} size={20} />
+            </div>
+            <span className="font-medium">영상 생성</span>
           </div>
         </div>
       </div>
