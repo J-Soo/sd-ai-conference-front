@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, FileText, Loader2, Calendar, Clock, Trash2, CheckSquare, Square, X, AlertCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Loader2, Calendar, Clock, Trash2, CheckSquare, Square, X, AlertCircle, Volume2, TestTube, FileSearch } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import FileManager from '../components/FileManager';
 import ScriptSegmentViewer from '../components/ScriptSegmentViewer';
@@ -26,6 +26,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [loadingScripts, setLoadingScripts] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generationResult, setGenerationResult] = useState<string | null>(null);
   
   // 삭제 관련 상태
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
@@ -253,6 +254,11 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
     }
   };
 
+  // 생성 결과 처리
+  const handleGenerationResult = (result: string) => {
+    setGenerationResult(result);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
@@ -298,6 +304,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                       setServerConnected={setServerConnected}
                       onNavigateToVoiceGeneration={onNavigateToVoiceGeneration}
                       onScriptGenerated={loadScripts}
+                      onGenerationResult={handleGenerationResult}
                     />
                   </div>
                 </Panel>
@@ -312,18 +319,50 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                 
                 <Panel defaultSize={50} minSize={30} className="pt-2">
                   <div className="h-full overflow-auto">
-                    {/* 생성 결과 영역 - 별도 컴포넌트로 분리 */}
+                    {/* 생성 결과 영역 */}
                     <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
                       <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                        <h3 className="text-lg font-semibold">생성 결과</h3>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold">생성 결과</h3>
+                          {!serverConnected && generationResult && (
+                            <div className="flex items-center space-x-2">
+                              <TestTube className={`${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} size={16} />
+                              <span className={`text-xs ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                                더미 데이터
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="p-6 h-[calc(100%-5rem)] overflow-y-auto">
-                        <div className="flex flex-col items-center justify-center py-8 h-full">
-                          <FileText className={`mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={32} />
-                          <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                            파일을 업로드하고 대본을 생성하면 결과가 여기에 표시됩니다
-                          </p>
-                        </div>
+                        {generationResult ? (
+                          <div className="space-y-4">
+                            <div className={`p-6 rounded-md overflow-auto ${
+                              darkMode ? 'bg-gray-900 text-gray-200' : 'bg-gray-50 text-gray-800'
+                            }`}>
+                              <div className={`whitespace-pre-wrap ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                {generationResult}
+                              </div>
+                            </div>
+                            
+                            <button
+                              onClick={onNavigateToVoiceGeneration}
+                              className={`w-full px-5 py-3 rounded-md flex justify-center items-center space-x-2 font-medium
+                                ${darkMode ? 'bg-green-600 hover:bg-green-500' : 'bg-green-600 hover:bg-green-700'} text-white
+                                transition-colors duration-200`}
+                            >
+                              <Volume2 size={18} />
+                              <span>음성 생성하기</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-8 h-full">
+                            <FileSearch className={`mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={32} />
+                            <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                              파일을 업로드하고 대본을 생성하면 결과가 여기에 표시됩니다
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -391,7 +430,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                     }`}
                                     title={`선택된 ${selectedScriptIds.size}개 삭제`}
                                   >
-                                    {isDeleting ? <Loader2 className="animate-spin\" size={16} /> : <Trash2 size={16} />}
+                                    {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                                   </button>
                                 )}
                                 
@@ -523,7 +562,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                     title="대본 삭제"
                                   >
                                     {isDeleting && deletingScriptId === script.id ? 
-                                      <Loader2 className="animate-spin\" size={14} /> : 
+                                      <Loader2 className="animate-spin" size={14} /> : 
                                       <Trash2 size={14} />
                                     }
                                   </button>
@@ -598,7 +637,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
@@ -647,7 +686,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
