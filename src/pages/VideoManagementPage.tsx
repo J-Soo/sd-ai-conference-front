@@ -642,19 +642,22 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
               <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">세그먼트 옵션</h3>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="useAvatar"
-                      checked={customization?.use_avatar || false}
-                      onChange={(e) => handleAvatarToggle(e.target.checked)}
-                      disabled={!customization}
-                      className="rounded"
-                    />
-                    <label htmlFor="useAvatar" className="text-sm font-medium">
-                      아바타 사용
-                    </label>
-                  </div>
+                  {/* 세그먼트가 선택되었을 때만 아바타 사용 체크박스 표시 */}
+                  {selectedSegment && (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="useAvatar"
+                        checked={customization?.use_avatar || false}
+                        onChange={(e) => handleAvatarToggle(e.target.checked)}
+                        disabled={!customization}
+                        className="rounded"
+                      />
+                      <label htmlFor="useAvatar" className="text-sm font-medium">
+                        아바타 사용
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="p-6 h-[calc(100%-5rem)] overflow-y-auto">
