@@ -326,7 +326,7 @@ ${randomResponse}
           )}
         </div>
       </div>
-      <div className="p-6 h-[calc(100%-5rem)] overflow-y-auto">
+      <div className="p-6 h-[calc(100%-5rem)]">
         <FileUploader onFilesAdded={handleFilesAdded} darkMode={darkMode} />
         
         {error && (
