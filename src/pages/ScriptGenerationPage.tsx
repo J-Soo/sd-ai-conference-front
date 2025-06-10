@@ -307,8 +307,8 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                 />
               </div>
               
-              {/* 생성 결과 영역 - 확장된 높이 */}
-              <div className="flex-1">
+              {/* 생성 결과 영역 - 직접 높이 지정 */}
+              <div className="h-[calc(100vh-600px)]">
                 <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
                   <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <div className="flex items-center justify-between">
@@ -417,7 +417,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                   }`}
                                   title={`선택된 ${selectedScriptIds.size}개 삭제`}
                                 >
-                                  {isDeleting ? <Loader2 className="animate-spin\" size={16} /> : <Trash2 size={16} />}
+                                  {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                                 </button>
                               )}
                               
@@ -549,7 +549,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                   title="대본 삭제"
                                 >
                                   {isDeleting && deletingScriptId === script.id ? 
-                                    <Loader2 className="animate-spin\" size={14} /> : 
+                                    <Loader2 className="animate-spin" size={14} /> : 
                                     <Trash2 size={14} />
                                   }
                                 </button>
@@ -563,8 +563,8 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                 </div>
               </div>
 
-              {/* 대본 세그먼트 영역 - 확장된 높이 */}
-              <div className="flex-1">
+              {/* 대본 세그먼트 영역 - 직접 높이 지정 */}
+              <div className="h-[calc(100vh-600px)]">
                 <ScriptSegmentViewer 
                   selectedScript={selectedScript}
                   darkMode={darkMode}
@@ -616,7 +616,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
@@ -665,7 +665,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="animate-spin\" size={16} />
+                    <Loader2 className="animate-spin" size={16} />
                     <span>삭제 중...</span>
                   </>
                 ) : (
