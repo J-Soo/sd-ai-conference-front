@@ -1,6 +1,7 @@
 import React from 'react';
 import { FileText, Mic, Video, User, ArrowRight, Sparkles, Volume2 } from 'lucide-react';
 import { PageType } from '../types';
+import MenuCard from '../components/MenuCard';
 
 interface HomePageProps {
   darkMode: boolean;
@@ -8,7 +9,7 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
-  // 메인 메뉴 (1열)
+  // 메인 메뉴
   const mainMenuItems = [
     {
       id: 'script-generation' as PageType,
@@ -36,7 +37,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
     }
   ];
 
-  // 서브 메뉴 (2열)
+  // 서브 메뉴
   const subMenuItems = [
     {
       id: 'avatar-management' as PageType,
@@ -47,87 +48,6 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       features: ['아바타 등록', '이미지 업로드', '아바타 정보 관리', '아바타 삭제']
     }
   ];
-
-  const getColorClasses = (color: string, darkMode: boolean) => {
-    const colors = {
-      blue: {
-        bg: darkMode ? 'bg-blue-900/20 hover:bg-blue-900/30' : 'bg-blue-50 hover:bg-blue-100',
-        border: darkMode ? 'border-blue-700 hover:border-blue-600' : 'border-blue-200 hover:border-blue-300',
-        icon: darkMode ? 'text-blue-400' : 'text-blue-600',
-        title: darkMode ? 'text-blue-300' : 'text-blue-700',
-        arrow: darkMode ? 'text-blue-400 group-hover:text-blue-300' : 'text-blue-500 group-hover:text-blue-600'
-      },
-      green: {
-        bg: darkMode ? 'bg-green-900/20 hover:bg-green-900/30' : 'bg-green-50 hover:bg-green-100',
-        border: darkMode ? 'border-green-700 hover:border-green-600' : 'border-green-200 hover:border-green-300',
-        icon: darkMode ? 'text-green-400' : 'text-green-600',
-        title: darkMode ? 'text-green-300' : 'text-green-700',
-        arrow: darkMode ? 'text-green-400 group-hover:text-green-300' : 'text-green-500 group-hover:text-green-600'
-      },
-      purple: {
-        bg: darkMode ? 'bg-purple-900/20 hover:bg-purple-900/30' : 'bg-purple-50 hover:bg-purple-100',
-        border: darkMode ? 'border-purple-700 hover:border-purple-600' : 'border-purple-200 hover:border-purple-300',
-        icon: darkMode ? 'text-purple-400' : 'text-purple-600',
-        title: darkMode ? 'text-purple-300' : 'text-purple-700',
-        arrow: darkMode ? 'text-purple-400 group-hover:text-purple-300' : 'text-purple-500 group-hover:text-purple-600'
-      },
-      orange: {
-        bg: darkMode ? 'bg-orange-900/20 hover:bg-orange-900/30' : 'bg-orange-50 hover:bg-orange-100',
-        border: darkMode ? 'border-orange-700 hover:border-orange-600' : 'border-orange-200 hover:border-orange-300',
-        icon: darkMode ? 'text-orange-400' : 'text-orange-600',
-        title: darkMode ? 'text-orange-300' : 'text-orange-700',
-        arrow: darkMode ? 'text-orange-400 group-hover:text-orange-300' : 'text-orange-500 group-hover:text-orange-600'
-      }
-    };
-    return colors[color as keyof typeof colors];
-  };
-
-  const renderMenuCard = (item: any) => {
-    const colors = getColorClasses(item.color, darkMode);
-    const IconComponent = item.icon;
-    
-    return (
-      <div
-        key={item.id}
-        onClick={() => onNavigate(item.id)}
-        className={`group cursor-pointer rounded-xl border-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg
-          w-96 h-[28rem] p-10 pb-16 flex flex-col
-          ${colors.bg} ${colors.border}`}
-      >
-        <div className="flex items-start justify-between mb-8">
-          <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-            <IconComponent className={colors.icon} size={36} />
-          </div>
-          <ArrowRight 
-            className={`transition-all duration-300 transform group-hover:translate-x-1 ${colors.arrow}`} 
-            size={28} 
-          />
-        </div>
-        
-        <h3 className={`font-bold mb-4 text-2xl ${colors.title}`}>
-          {item.title}
-        </h3>
-        
-        <p className={`mb-8 leading-relaxed text-lg flex-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          {item.description}
-        </p>
-        
-        <div className="mt-auto mb-6">
-          <h4 className={`font-semibold text-sm uppercase tracking-wide mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            주요 기능
-          </h4>
-          <ul className="space-y-2">
-            {item.features.map((feature: string, index: number) => (
-              <li key={index} className={`flex items-center text-base ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                <div className={`w-2 h-2 rounded-full mr-3 ${colors.icon.replace('text-', 'bg-')}`}></div>
-                {feature}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-8">
@@ -150,7 +70,19 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
           <h3 className="text-xl font-bold">메인 메뉴</h3>
         </div>
         <div className="flex flex-wrap gap-8 justify-start">
-          {mainMenuItems.map((item) => renderMenuCard(item))}
+          {mainMenuItems.map((item) => (
+            <MenuCard
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              description={item.description}
+              icon={item.icon}
+              color={item.color}
+              features={item.features}
+              darkMode={darkMode}
+              onNavigate={onNavigate}
+            />
+          ))}
         </div>
       </div>
 
@@ -161,7 +93,19 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
           <h3 className="text-xl font-bold">서브 메뉴</h3>
         </div>
         <div className="flex flex-wrap gap-8 justify-start">
-          {subMenuItems.map((item) => renderMenuCard(item))}
+          {subMenuItems.map((item) => (
+            <MenuCard
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              description={item.description}
+              icon={item.icon}
+              color={item.color}
+              features={item.features}
+              darkMode={darkMode}
+              onNavigate={onNavigate}
+            />
+          ))}
         </div>
       </div>
 
