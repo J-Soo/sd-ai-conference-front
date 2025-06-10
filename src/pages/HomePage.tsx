@@ -8,7 +8,7 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
-  // 메인 기능 메뉴 (1열)
+  // 메인 메뉴 (1열)
   const mainMenuItems = [
     {
       id: 'script-generation' as PageType,
@@ -91,24 +91,24 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         key={item.id}
         onClick={() => onNavigate(item.id)}
         className={`group cursor-pointer rounded-xl border-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg
-          ${size === 'large' ? 'p-8' : 'p-6'}
+          ${size === 'large' ? 'p-8' : 'p-8'}
           ${colors.bg} ${colors.border}`}
       >
-        <div className={`flex items-start justify-between ${size === 'large' ? 'mb-6' : 'mb-4'}`}>
+        <div className={`flex items-start justify-between ${size === 'large' ? 'mb-6' : 'mb-6'}`}>
           <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-            <IconComponent className={colors.icon} size={size === 'large' ? 32 : 28} />
+            <IconComponent className={colors.icon} size={size === 'large' ? 32 : 32} />
           </div>
           <ArrowRight 
             className={`transition-all duration-300 transform group-hover:translate-x-1 ${colors.arrow}`} 
-            size={size === 'large' ? 24 : 20} 
+            size={size === 'large' ? 24 : 24} 
           />
         </div>
         
-        <h3 className={`font-bold mb-3 ${size === 'large' ? 'text-2xl' : 'text-xl'} ${colors.title}`}>
+        <h3 className={`font-bold mb-3 ${size === 'large' ? 'text-2xl' : 'text-2xl'} ${colors.title}`}>
           {item.title}
         </h3>
         
-        <p className={`mb-6 leading-relaxed ${size === 'large' ? 'text-base' : 'text-sm'} ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        <p className={`mb-6 leading-relaxed ${size === 'large' ? 'text-base' : 'text-base'} ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           {item.description}
         </p>
         
@@ -118,7 +118,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
           </h4>
           <ul className="space-y-1">
             {item.features.map((feature: string, index: number) => (
-              <li key={index} className={`flex items-center ${size === 'large' ? 'text-sm' : 'text-xs'} ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <li key={index} className={`flex items-center ${size === 'large' ? 'text-sm' : 'text-sm'} ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 <div className={`w-1.5 h-1.5 rounded-full mr-3 ${colors.icon.replace('text-', 'bg-')}`}></div>
                 {feature}
               </li>
@@ -143,13 +143,13 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         </p>
       </div>
 
-      {/* 메인 기능 메뉴 (1열) */}
+      {/* 메인 메뉴 (1열) */}
       <div className="space-y-4">
         <div className="flex items-center space-x-2 mb-6">
           <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-blue-500' : 'bg-blue-600'}`}></div>
-          <h3 className="text-xl font-bold">메인 기능</h3>
+          <h3 className="text-xl font-bold">메인 메뉴</h3>
         </div>
-        <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8">
           {mainMenuItems.map((item) => renderMenuCard(item, 'large'))}
         </div>
       </div>
@@ -158,10 +158,10 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       <div className="space-y-4">
         <div className="flex items-center space-x-2 mb-6">
           <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-orange-500' : 'bg-orange-600'}`}></div>
-          <h3 className="text-xl font-bold">관리 도구</h3>
+          <h3 className="text-xl font-bold">서브 메뉴</h3>
         </div>
-        <div className="grid md:grid-cols-1 gap-6 max-w-2xl mx-auto">
-          {subMenuItems.map((item) => renderMenuCard(item, 'small'))}
+        <div className="grid md:grid-cols-1 gap-6">
+          {subMenuItems.map((item) => renderMenuCard(item, 'large'))}
         </div>
       </div>
 
