@@ -25,11 +25,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       icon: Mic,
       color: 'green',
       features: ['대본 선택', 'TTS 음성 생성', '음성 미리보기', '다운로드']
-    }
-  ];
-
-  // 서브 메뉴 (2열)
-  const subMenuItems = [
+    },
     {
       id: 'video-management' as PageType,
       title: '영상 관리',
@@ -37,7 +33,11 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       icon: Video,
       color: 'purple',
       features: ['세그먼트 커스터마이징', '이미지 업로드', '아바타 설정', '영상 생성']
-    },
+    }
+  ];
+
+  // 서브 메뉴 (2열)
+  const subMenuItems = [
     {
       id: 'avatar-management' as PageType,
       title: '아바타 관리',
@@ -149,7 +149,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
           <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-blue-500' : 'bg-blue-600'}`}></div>
           <h3 className="text-xl font-bold">메인 기능</h3>
         </div>
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {mainMenuItems.map((item) => renderMenuCard(item, 'large'))}
         </div>
       </div>
@@ -157,10 +157,10 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       {/* 서브 메뉴 (2열) */}
       <div className="space-y-4">
         <div className="flex items-center space-x-2 mb-6">
-          <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-purple-500' : 'bg-purple-600'}`}></div>
+          <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-orange-500' : 'bg-orange-600'}`}></div>
           <h3 className="text-xl font-bold">관리 도구</h3>
         </div>
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-1 gap-6 max-w-2xl mx-auto">
           {subMenuItems.map((item) => renderMenuCard(item, 'small'))}
         </div>
       </div>
