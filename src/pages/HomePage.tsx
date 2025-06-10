@@ -11,16 +11,16 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
   const menuItems = [
     {
       id: 'script-generation' as PageType,
-      title: '대본 생성',
-      description: 'PPT나 PDF 파일을 업로드하여 AI 기술로 발표 대본을 자동 생성합니다',
+      title: '대본 관리',
+      description: 'PPT나 PDF 파일을 업로드하여 AI 기술로 발표 대본을 자동 생성하고 관리합니다',
       icon: FileText,
       color: 'blue',
-      features: ['파일 업로드', 'AI 대본 생성', '발표 시간 설정', '다양한 스타일']
+      features: ['파일 업로드', 'AI 대본 생성', '발표 시간 설정', '대본 세그먼트 관리']
     },
     {
       id: 'voice-generation' as PageType,
-      title: '음성 생성',
-      description: '생성된 대본을 바탕으로 자연스러운 TTS 음성 파일을 생성합니다',
+      title: '음성 관리',
+      description: '생성된 대본을 바탕으로 자연스러운 TTS 음성 파일을 생성하고 관리합니다',
       icon: Mic,
       color: 'green',
       features: ['대본 선택', 'TTS 음성 생성', '음성 미리보기', '다운로드']

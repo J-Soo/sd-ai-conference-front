@@ -18,6 +18,18 @@ export interface Script {
   updated_at: string;
 }
 
+export interface ScriptSegment {
+  id: string;
+  script_id: string;
+  segment_number: number;
+  title: string;
+  content: string;
+  start_time?: number;
+  end_time?: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AudioGeneration {
   id: string;
   script_id: string;

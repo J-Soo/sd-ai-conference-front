@@ -44,6 +44,10 @@ function App() {
     setCurrentPage('voice-generation');
   };
 
+  const handleHomeClick = () => {
+    setCurrentPage('home');
+  };
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'script-generation':
@@ -74,16 +78,26 @@ function App() {
     }
   };
 
+  const getPageTitle = () => {
+    switch (currentPage) {
+      case 'script-generation':
+        return '대본 관리';
+      case 'voice-generation':
+        return '음성 관리';
+      default:
+        return '관리자 페이지';
+    }
+  };
+
   return (
     <div className={`min-h-screen transition-colors duration-200 ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       <ConnectionBanner isConnected={serverConnected} darkMode={darkMode} />
-      <Header darkMode={darkMode} />
+      <Header darkMode={darkMode} onHomeClick={handleHomeClick} />
       
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">
-            {currentPage === 'home' ? '관리자 페이지' : 
-             currentPage === 'script-generation' ? '대본 생성' : '음성 생성'}
+            {getPageTitle()}
           </h1>
           <button 
             onClick={toggleDarkMode}

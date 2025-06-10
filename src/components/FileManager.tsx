@@ -79,13 +79,15 @@ interface FileManagerProps {
   serverConnected: boolean;
   setServerConnected: (connected: boolean) => void;
   onNavigateToVoiceGeneration?: () => void;
+  onScriptGenerated?: () => void;
 }
 
 const FileManager: React.FC<FileManagerProps> = ({ 
   darkMode, 
   serverConnected, 
   setServerConnected,
-  onNavigateToVoiceGeneration 
+  onNavigateToVoiceGeneration,
+  onScriptGenerated
 }) => {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -187,6 +189,11 @@ ${randomResponse}
       setResponse(enhancedResponse);
       setIsLoading(false);
       
+      // 대본 생성 완료 콜백 호출
+      if (onScriptGenerated) {
+        onScriptGenerated();
+      }
+      
     } catch (error: any) {
       setError("테스트 모드에서 오류가 발생했습니다.");
       setIsLoading(false);
@@ -275,6 +282,11 @@ ${randomResponse}
       setResponse(resultResponse.data.script);
       
       setIsLoading(false);
+      
+      // 대본 생성 완료 콜백 호출
+      if (onScriptGenerated) {
+        onScriptGenerated();
+      }
       
     } catch (error: any) {
       console.error('API 호출 중 오류 발생:', error);
@@ -366,8 +378,8 @@ ${randomResponse}
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
-                    <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   <span>{serverConnected ? '처리 중...' : '테스트 처리 중...'}</span>
@@ -386,7 +398,7 @@ ${randomResponse}
       <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
         <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">서버 응답</h2>
+            <h2 className="text-xl font-semibold">생성 결과</h2>
             {!serverConnected && response && (
               <div className="flex items-center space-x-2">
                 <TestTube className={`${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} size={16} />
