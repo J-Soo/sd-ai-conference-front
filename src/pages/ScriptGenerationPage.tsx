@@ -55,7 +55,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
       file_name: 'project_status.pdf',
       duration_minutes: 3,
       created_at: '2024-01-14T14:20:00Z',
-      updated_at: '2024-01-14T14:20:00Z'
+      updated_at: '2024-01-14T20:00Z'
     },
     {
       id: '3',
@@ -290,13 +290,13 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
         </div>
       )}
 
-      <div className="h-[calc(100vh-200px)]">
+      <div className="h-[calc(100vh-160px)]">
         <PanelGroup direction="horizontal" className="h-full">
           {/* 왼쪽: 파일 업로드 및 생성 결과 */}
           <Panel defaultSize={50} minSize={30} className="pr-2">
             <div className="h-full flex flex-col">
               {/* 파일 업로드 영역 - 고정 높이 */}
-              <div className="flex-1 mb-4">
+              <div className="h-80 mb-4">
                 <FileManager 
                   darkMode={darkMode} 
                   serverConnected={serverConnected}
@@ -307,7 +307,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                 />
               </div>
               
-              {/* 생성 결과 영역 - 고정 높이 */}
+              {/* 생성 결과 영역 - 확장된 높이 */}
               <div className="flex-1">
                 <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
                   <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -370,7 +370,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           <Panel defaultSize={50} minSize={30} className="pl-2">
             <div className="h-full flex flex-col">
               {/* 대본 목록 영역 - 고정 높이 */}
-              <div className="flex-[3] mb-4">
+              <div className="h-80 mb-4">
                 <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
                   <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <div className="flex items-center justify-between">
@@ -563,8 +563,8 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                 </div>
               </div>
 
-              {/* 대본 세그먼트 영역 - 고정 높이 */}
-              <div className="flex-[2]">
+              {/* 대본 세그먼트 영역 - 확장된 높이 */}
+              <div className="flex-1">
                 <ScriptSegmentViewer 
                   selectedScript={selectedScript}
                   darkMode={darkMode}
