@@ -287,7 +287,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
       <div className="h-[calc(100vh-200px)]">
         <PanelGroup direction="horizontal" className="h-full">
           {/* 왼쪽: 파일 업로드 및 생성 결과 */}
-          <Panel defaultSize={65} minSize={40} className="pr-2">
+          <Panel defaultSize={50} minSize={30} className="pr-2">
             <div className="h-full">
               <PanelGroup direction="vertical">
                 <Panel defaultSize={50} minSize={30} className="pb-2">
@@ -328,7 +328,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           </PanelResizeHandle>
 
           {/* 오른쪽: 대본 목록 및 세그먼트 뷰어 */}
-          <Panel defaultSize={35} minSize={25} className="pl-2">
+          <Panel defaultSize={50} minSize={30} className="pl-2">
             <div className="h-full">
               <PanelGroup direction="vertical">
                 <Panel defaultSize={50} minSize={30} className="pb-2">
