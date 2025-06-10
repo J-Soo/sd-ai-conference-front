@@ -8,7 +8,8 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
-  const menuItems = [
+  // 메인 기능 메뉴 (1열)
+  const mainMenuItems = [
     {
       id: 'script-generation' as PageType,
       title: '대본 관리',
@@ -24,7 +25,11 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       icon: Mic,
       color: 'green',
       features: ['대본 선택', 'TTS 음성 생성', '음성 미리보기', '다운로드']
-    },
+    }
+  ];
+
+  // 서브 메뉴 (2열)
+  const subMenuItems = [
     {
       id: 'video-management' as PageType,
       title: '영상 관리',
@@ -77,6 +82,53 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
     return colors[color as keyof typeof colors];
   };
 
+  const renderMenuCard = (item: any, size: 'large' | 'small' = 'large') => {
+    const colors = getColorClasses(item.color, darkMode);
+    const IconComponent = item.icon;
+    
+    return (
+      <div
+        key={item.id}
+        onClick={() => onNavigate(item.id)}
+        className={`group cursor-pointer rounded-xl border-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg
+          ${size === 'large' ? 'p-8' : 'p-6'}
+          ${colors.bg} ${colors.border}`}
+      >
+        <div className={`flex items-start justify-between ${size === 'large' ? 'mb-6' : 'mb-4'}`}>
+          <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+            <IconComponent className={colors.icon} size={size === 'large' ? 32 : 28} />
+          </div>
+          <ArrowRight 
+            className={`transition-all duration-300 transform group-hover:translate-x-1 ${colors.arrow}`} 
+            size={size === 'large' ? 24 : 20} 
+          />
+        </div>
+        
+        <h3 className={`font-bold mb-3 ${size === 'large' ? 'text-2xl' : 'text-xl'} ${colors.title}`}>
+          {item.title}
+        </h3>
+        
+        <p className={`mb-6 leading-relaxed ${size === 'large' ? 'text-base' : 'text-sm'} ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          {item.description}
+        </p>
+        
+        <div className="space-y-2">
+          <h4 className={`font-semibold text-sm uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            주요 기능
+          </h4>
+          <ul className="space-y-1">
+            {item.features.map((feature: string, index: number) => (
+              <li key={index} className={`flex items-center ${size === 'large' ? 'text-sm' : 'text-xs'} ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <div className={`w-1.5 h-1.5 rounded-full mr-3 ${colors.icon.replace('text-', 'bg-')}`}></div>
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       {/* 헤더 섹션 */}
@@ -91,53 +143,26 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         </p>
       </div>
 
-      {/* 메뉴 카드들 */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-        {menuItems.map((item) => {
-          const colors = getColorClasses(item.color, darkMode);
-          const IconComponent = item.icon;
-          
-          return (
-            <div
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={`group cursor-pointer rounded-xl border-2 p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg
-                ${colors.bg} ${colors.border}`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-                  <IconComponent className={colors.icon} size={28} />
-                </div>
-                <ArrowRight 
-                  className={`transition-all duration-300 transform group-hover:translate-x-1 ${colors.arrow}`} 
-                  size={20} 
-                />
-              </div>
-              
-              <h3 className={`text-xl font-bold mb-3 ${colors.title}`}>
-                {item.title}
-              </h3>
-              
-              <p className={`mb-4 leading-relaxed text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                {item.description}
-              </p>
-              
-              <div className="space-y-2">
-                <h4 className={`font-semibold text-xs uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  주요 기능
-                </h4>
-                <ul className="space-y-1">
-                  {item.features.map((feature, index) => (
-                    <li key={index} className={`flex items-center text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full mr-2 ${colors.icon.replace('text-', 'bg-')}`}></div>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          );
-        })}
+      {/* 메인 기능 메뉴 (1열) */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2 mb-6">
+          <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-blue-500' : 'bg-blue-600'}`}></div>
+          <h3 className="text-xl font-bold">메인 기능</h3>
+        </div>
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {mainMenuItems.map((item) => renderMenuCard(item, 'large'))}
+        </div>
+      </div>
+
+      {/* 서브 메뉴 (2열) */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2 mb-6">
+          <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-purple-500' : 'bg-purple-600'}`}></div>
+          <h3 className="text-xl font-bold">관리 도구</h3>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {subMenuItems.map((item) => renderMenuCard(item, 'small'))}
+        </div>
       </div>
 
       {/* 워크플로우 섹션 */}
