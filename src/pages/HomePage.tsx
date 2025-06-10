@@ -63,6 +63,46 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         </p>
       </div>
 
+      {/* 워크플로우 섹션 */}
+      <div className={`p-8 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
+        <h3 className="text-xl font-bold mb-6 text-center">워크플로우</h3>
+        <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-6">
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-full ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+              <FileText className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={20} />
+            </div>
+            <span className="font-medium">파일 업로드</span>
+          </div>
+          
+          <ArrowRight className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={20} />
+          
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-full ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+              <Sparkles className={`${darkMode ? 'text-purple-400' : 'text-purple-600'}`} size={20} />
+            </div>
+            <span className="font-medium">대본 생성</span>
+          </div>
+          
+          <ArrowRight className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={20} />
+          
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-full ${darkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
+              <Volume2 className={`${darkMode ? 'text-green-400' : 'text-green-600'}`} size={20} />
+            </div>
+            <span className="font-medium">음성 생성</span>
+          </div>
+          
+          <ArrowRight className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={20} />
+          
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-full ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+              <Video className={`${darkMode ? 'text-purple-400' : 'text-purple-600'}`} size={20} />
+            </div>
+            <span className="font-medium">영상 생성</span>
+          </div>
+        </div>
+      </div>
+
       {/* 메인 메뉴 */}
       <div className="space-y-4">
         <div className="flex items-center space-x-2 mb-6">
@@ -106,46 +146,6 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
               onNavigate={onNavigate}
             />
           ))}
-        </div>
-      </div>
-
-      {/* 워크플로우 섹션 */}
-      <div className={`mt-16 p-8 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
-        <h3 className="text-xl font-bold mb-6 text-center">워크플로우</h3>
-        <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-6">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-full ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
-              <FileText className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={20} />
-            </div>
-            <span className="font-medium">파일 업로드</span>
-          </div>
-          
-          <ArrowRight className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={20} />
-          
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-full ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
-              <Sparkles className={`${darkMode ? 'text-purple-400' : 'text-purple-600'}`} size={20} />
-            </div>
-            <span className="font-medium">대본 생성</span>
-          </div>
-          
-          <ArrowRight className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={20} />
-          
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-full ${darkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
-              <Volume2 className={`${darkMode ? 'text-green-400' : 'text-green-600'}`} size={20} />
-            </div>
-            <span className="font-medium">음성 생성</span>
-          </div>
-          
-          <ArrowRight className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={20} />
-          
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-full ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
-              <Video className={`${darkMode ? 'text-purple-400' : 'text-purple-600'}`} size={20} />
-            </div>
-            <span className="font-medium">영상 생성</span>
-          </div>
         </div>
       </div>
     </div>
