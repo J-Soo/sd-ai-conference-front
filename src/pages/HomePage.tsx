@@ -68,8 +68,8 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         <h3 className="text-xl font-bold mb-6 text-center">워크플로우</h3>
         <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-6">
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-full ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
-              <FileText className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={20} />
+            <div className={`p-2 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+              <FileText className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`} size={20} />
             </div>
             <span className="font-medium">파일 업로드</span>
           </div>
@@ -77,8 +77,8 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
           <ArrowRight className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={20} />
           
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-full ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
-              <Sparkles className={`${darkMode ? 'text-purple-400' : 'text-purple-600'}`} size={20} />
+            <div className={`p-2 rounded-full ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+              <Sparkles className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={20} />
             </div>
             <span className="font-medium">대본 생성</span>
           </div>
