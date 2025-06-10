@@ -565,7 +565,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
               </div>
 
               {/* 대본 세그먼트 영역 - 고정 높이 720px */}
-              <div className="h-[900px]">
+              <div className="h-[800px]">
                 <ScriptSegmentViewer 
                   selectedScript={selectedScript}
                   darkMode={darkMode}
