@@ -64,25 +64,25 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     {
       id: 'avatar_1',
       name: '전문가 아바타',
-      image_url: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      image_url: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
       description: '비즈니스 전문가 스타일'
     },
     {
       id: 'avatar_2',
       name: '친근한 아바타',
-      image_url: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      image_url: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
       description: '친근하고 따뜻한 스타일'
     },
     {
       id: 'avatar_3',
       name: '학술적 아바타',
-      image_url: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      image_url: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
       description: '학술적이고 신뢰감 있는 스타일'
     },
     {
       id: 'avatar_4',
       name: '열정적 아바타',
-      image_url: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      image_url: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
       description: '에너지 넘치고 열정적인 스타일'
     }
   ];
@@ -387,6 +387,11 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     setSelectedVideoGeneration(video);
   };
 
+  // 선택된 아바타 정보 가져오기
+  const getSelectedAvatar = () => {
+    return avatars.find(avatar => avatar.id === customization?.selected_avatar_id);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
@@ -621,39 +626,88 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                             </label>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          {avatars.map((avatar) => (
-                            <div
-                              key={avatar.id}
-                              onClick={() => handleAvatarSelect(avatar.id)}
-                              className={`relative p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                                customization.selected_avatar_id === avatar.id
-                                  ? darkMode 
-                                    ? 'border-purple-500 bg-purple-900/20' 
-                                    : 'border-purple-500 bg-purple-50'
-                                  : darkMode
-                                    ? 'border-gray-600 hover:border-gray-500 bg-gray-700/50 hover:bg-gray-700'
-                                    : 'border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100'
-                              }`}
-                            >
-                              {customization.selected_avatar_id === avatar.id && (
-                                <div className={`absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center ${
-                                  darkMode ? 'bg-purple-500' : 'bg-purple-600'
-                                }`}>
-                                  <Check size={12} className="text-white" />
+                        
+                        {/* 좌우 분할 레이아웃 */}
+                        <div className="grid grid-cols-2 gap-4 h-64">
+                          {/* 왼쪽: 아바타 목록 */}
+                          <div className={`rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700/30' : 'border-gray-200 bg-gray-50'} p-3`}>
+                            <h6 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                              아바타 목록
+                            </h6>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                              {avatars.map((avatar) => (
+                                <div
+                                  key={avatar.id}
+                                  onClick={() => handleAvatarSelect(avatar.id)}
+                                  className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                                    customization.selected_avatar_id === avatar.id
+                                      ? darkMode 
+                                        ? 'bg-purple-600/20 border border-purple-500' 
+                                        : 'bg-purple-50 border border-purple-300'
+                                      : darkMode
+                                        ? 'hover:bg-gray-600/50'
+                                        : 'hover:bg-gray-100'
+                                  }`}
+                                >
+                                  <img
+                                    src={avatar.image_url}
+                                    alt={avatar.name}
+                                    className="w-10 h-10 object-cover rounded-full"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`text-sm font-medium truncate ${
+                                      customization.selected_avatar_id === avatar.id
+                                        ? darkMode ? 'text-purple-300' : 'text-purple-700'
+                                        : darkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>
+                                      {avatar.name}
+                                    </p>
+                                    <p className={`text-xs truncate ${
+                                      customization.selected_avatar_id === avatar.id
+                                        ? darkMode ? 'text-purple-400' : 'text-purple-600'
+                                        : darkMode ? 'text-gray-400' : 'text-gray-500'
+                                    }`}>
+                                      {avatar.description}
+                                    </p>
+                                  </div>
+                                  {customization.selected_avatar_id === avatar.id && (
+                                    <Check size={16} className={darkMode ? 'text-purple-400' : 'text-purple-600'} />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* 오른쪽: 선택된 아바타 이미지 */}
+                          <div className={`rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700/30' : 'border-gray-200 bg-gray-50'} p-3`}>
+                            <h6 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                              선택된 아바타 이미지
+                            </h6>
+                            <div className="flex flex-col items-center justify-center h-48">
+                              {getSelectedAvatar() ? (
+                                <div className="text-center">
+                                  <img
+                                    src={getSelectedAvatar()!.image_url}
+                                    alt={getSelectedAvatar()!.name}
+                                    className="w-32 h-32 object-cover rounded-lg mx-auto mb-3"
+                                  />
+                                  <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    {getSelectedAvatar()!.name}
+                                  </p>
+                                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {getSelectedAvatar()!.description}
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="text-center">
+                                  <User className={`mx-auto mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={48} />
+                                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    아바타를 선택해주세요
+                                  </p>
                                 </div>
                               )}
-                              <img
-                                src={avatar.image_url}
-                                alt={avatar.name}
-                                className="w-full h-20 object-cover rounded-lg mb-2"
-                              />
-                              <h6 className="font-medium text-sm mb-1">{avatar.name}</h6>
-                              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {avatar.description}
-                              </p>
                             </div>
-                          ))}
+                          </div>
                         </div>
                       </div>
                     ) : (
