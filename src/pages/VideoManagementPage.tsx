@@ -567,7 +567,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                       >
                         {savingCustomization ? (
                           <>
-                            <Loader2 className="animate-spin" size={16} />
+                            <Loader2 className="animate-spin\" size={16} />
                             <span>저장 중...</span>
                           </>
                         ) : (
@@ -726,7 +726,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
           >
             {generatingVideo ? (
               <>
-                <Loader2 className="animate-spin" size={20} />
+                <Loader2 className="animate-spin\" size={20} />
                 <span>영상 생성 중...</span>
               </>
             ) : (
