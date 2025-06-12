@@ -26,6 +26,9 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
   const [selectedVideoGeneration, setSelectedVideoGeneration] = useState<VideoGeneration | null>(null);
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   
+  // 비디오 설정 상태 추가 (상태 표시용)
+  const [videoConfigs, setVideoConfigs] = useState<Record<string, any>>({});
+  
   // 글로벌 아바타 설정 - 일괄 적용이 한 번이라도 저장된 적이 있는지 추적
   const [globalAvatarSettings, setGlobalAvatarSettings] = useState({
     selectedAvatarId: '',
@@ -127,6 +130,32 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
       created_at: new Date().toISOString()
     }
   ];
+
+  // 더미 비디오 설정 생성 (상태 표시용)
+  const generateDummyVideoConfigs = (scriptId: string, segments: ScriptSegment[]) => {
+    const configs: Record<string, any> = {};
+    const statuses = ['completed', 'generating', 'pending', 'failed'];
+    
+    segments.forEach((segment, index) => {
+      configs[segment.id] = {
+        id: `cfg_${segment.id}`,
+        script_id: scriptId,
+        segment_id: segment.id,
+        video_prompt: `세그먼트 ${segment.segment_index}에 대한 영상 생성 프롬프트입니다.`,
+        prompt_status: statuses[index % statuses.length],
+        prompt_retry_count: 0,
+        prompt_version: 1,
+        is_user_modified: false,
+        use_avatar: false,
+        last_modified_by: 'system',
+        modified_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+    });
+    
+    return configs;
+  };
 
   // 스크립트 목록 로드
   useEffect(() => {
@@ -236,13 +265,19 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
           const response = await axios.get(`http://localhost:8000/api/v1/scripts/${scriptId}/segments`);
           if (response.data && Array.isArray(response.data)) {
             setSegments(response.data);
+            // 비디오 설정도 함께 로드
+            loadVideoConfigs(scriptId, response.data);
           } else {
             setError('세그먼트 API에서 유효한 응답을 받지 못했습니다.');
-            setSegments(generateDummySegments(scriptId));
+            const dummySegs = generateDummySegments(scriptId);
+            setSegments(dummySegs);
+            setVideoConfigs(generateDummyVideoConfigs(scriptId, dummySegs));
           }
         } catch (apiError: any) {
           if (apiError.response && apiError.response.status === 404) {
-            setSegments(generateDummySegments(scriptId));
+            const dummySegs = generateDummySegments(scriptId);
+            setSegments(dummySegs);
+            setVideoConfigs(generateDummyVideoConfigs(scriptId, dummySegs));
           } else {
             setError(`세그먼트 로드 오류: ${apiError.message || '알 수 없는 오류'}`);
             setSegments([]);
@@ -250,13 +285,41 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
         }
       } else {
         await new Promise(resolve => setTimeout(resolve, 800));
-        setSegments(generateDummySegments(scriptId));
+        const dummySegs = generateDummySegments(scriptId);
+        setSegments(dummySegs);
+        setVideoConfigs(generateDummyVideoConfigs(scriptId, dummySegs));
       }
     } catch (err: any) {
       setError('세그먼트를 불러오는 중 오류가 발생했습니다.');
       setSegments([]);
     } finally {
       setLoadingSegments(false);
+    }
+  };
+
+  // 비디오 설정 로드 (상태 표시용)
+  const loadVideoConfigs = async (scriptId: string, segments: ScriptSegment[]) => {
+    try {
+      if (serverConnected) {
+        try {
+          const response = await axios.get(`http://localhost:8000/api/v1/segment-video-configs/by-script/${scriptId}`);
+          if (response.data && response.data.configs && Array.isArray(response.data.configs)) {
+            const configsMap: Record<string, any> = {};
+            response.data.configs.forEach((config: any) => {
+              configsMap[config.segment_id] = config;
+            });
+            setVideoConfigs(configsMap);
+          } else {
+            setVideoConfigs(generateDummyVideoConfigs(scriptId, segments));
+          }
+        } catch (apiError: any) {
+          setVideoConfigs(generateDummyVideoConfigs(scriptId, segments));
+        }
+      } else {
+        setVideoConfigs(generateDummyVideoConfigs(scriptId, segments));
+      }
+    } catch (err: any) {
+      setVideoConfigs(generateDummyVideoConfigs(scriptId, segments));
     }
   };
 
@@ -601,10 +664,11 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                 <div className="p-6 h-[calc(100%-5rem)] overflow-y-auto">
                   <SegmentList
                     segments={segments}
+                    videoConfigs={videoConfigs}
                     selectedSegment={selectedSegment}
                     onSegmentSelect={handleSegmentSelect}
                     darkMode={darkMode}
-                    showStatus={false}
+                    showStatus={true}
                     isLoading={loadingSegments}
                     emptyMessage="세그먼트가 없습니다"
                     serverConnected={serverConnected}
@@ -818,7 +882,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                       >
                         {savingCustomization ? (
                           <>
-                            <Loader2 className="animate-spin\" size={16} />
+                            <Loader2 className="animate-spin" size={16} />
                             <span>저장 중...</span>
                           </>
                         ) : (
@@ -977,7 +1041,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
           >
             {generatingVideo ? (
               <>
-                <Loader2 className="animate-spin\" size={20} />
+                <Loader2 className="animate-spin" size={20} />
                 <span>영상 생성 중...</span>
               </>
             ) : (
