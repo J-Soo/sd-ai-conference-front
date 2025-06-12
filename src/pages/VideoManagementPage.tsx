@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Play, Download, Loader2, FileText, Calendar, Clock, Save, RotateCcw, Video, Image as ImageIcon, User, Check } from 'lucide-react';
 import { Script, ScriptSegment, VideoSegmentCustomization, VideoGeneration, Avatar } from '../types';
-import { formatDate } from '../utils';
+import { formatDate, getImageUrl } from '../utils';
 import ImageUploader from '../components/ImageUploader';
 import axios from 'axios';
 
@@ -730,7 +730,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                                   }`}
                                 >
                                   <img
-                                    src={avatar.image_url}
+                                    src={getImageUrl(avatar.image_url)}
                                     alt={avatar.name}
                                     className="w-10 h-10 object-cover rounded-full"
                                   />
@@ -767,7 +767,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                               {getSelectedAvatar() ? (
                                 <div className="text-center">
                                   <img
-                                    src={getSelectedAvatar()!.image_url}
+                                    src={getImageUrl(getSelectedAvatar()!.image_url)}
                                     alt={getSelectedAvatar()!.name}
                                     className="w-32 h-32 object-cover rounded-lg mx-auto mb-3"
                                   />

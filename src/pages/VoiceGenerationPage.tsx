@@ -32,6 +32,8 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
   const [deletingScriptId, setDeletingScriptId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const DEFAULT_API_BASE_URL = 'http://localhost:8000/api/v1';
+
   // 더미 스크립트 데이터 (백엔드 연결이 안될 때 사용)
   const dummyScripts: Script[] = [
     {
@@ -277,18 +279,46 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
     try {
       if (serverConnected) {
         try {
-          // 실제 API 호출 시도
-          const response = await axios.post(`http://localhost:8000/api/v1/generation/generate-audio/${selectedScript.id}`);
+          // 첫 번째 API 호출 - 음성 생성 요청
+          const response = await axios.post(`${DEFAULT_API_BASE_URL}/tts/generate_by_script`, {
+            script_id: selectedScript.id,
+            voice_id: 'qD08hbcm7zxaT3iXNdmc'
+          });
           
-          if (response.data && response.data.audio_url) {
-            setAudioGeneration({
-              id: response.data.id || 'audio_' + Date.now(),
-              script_id: selectedScript.id,
-              audio_url: response.data.audio_url,
-              status: response.data.status || 'completed',
-              created_at: response.data.created_at || new Date().toISOString(),
-              updated_at: response.data.updated_at || new Date().toISOString()
-            });
+          if (response.data && response.data.tts_id) {
+            const ttsId = response.data.tts_id;
+            
+            // 두 번째 API 호출 - 생성된 음성 파일 가져오기
+            const audioResponse = await axios.get(`${DEFAULT_API_BASE_URL}/tts/generation/${ttsId}/combined`, { responseType: 'arraybuffer' });
+            
+            if (audioResponse.data) {
+              // ArrayBuffer를 Blob URL로 변환하여 사용
+              const audioBlob = new Blob([audioResponse.data], { type: 'audio/mp3' });
+              const audioUrl = window.URL.createObjectURL(audioBlob);
+              
+              // 기존 오디오 엘리먼트가 있으면 정지
+              if (audioElement) {
+                audioElement.pause();
+                setIsPlaying(false);
+              }
+              
+              // 새로운 오디오 엘리먼트 생성
+              const audio = new Audio(audioUrl);
+              audio.addEventListener('ended', () => setIsPlaying(false));
+              setAudioElement(audio);
+              
+              setAudioGeneration({
+                id: ttsId,
+                script_id: selectedScript.id,
+                audio_url: audioUrl,
+                status: 'completed',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+            } else {
+              console.error('음성 파일 응답 형식 오류:', audioResponse);
+              setError('음성 파일을 가져오는데 실패했습니다.');
+            }
           } else {
             // API 응답이 유효하지 않은 경우
             console.error('API 응답 형식 오류:', response.data);
@@ -364,7 +394,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
     
     const link = document.createElement('a');
     link.href = audioGeneration.audio_url;
-    link.download = `${selectedScript?.title || 'audio'}.wav`;
+    link.download = `${selectedScript?.title || 'audio'}.mp3`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -679,7 +709,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
                         {isPlaying ? <Pause size={16} /> : <Play size={16} />}
                       </button>
                       <span className={`flex-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {selectedScript.title}.wav
+                        {selectedScript.title}.mp3
                       </span>
                       <button
                         onClick={handleDownload}

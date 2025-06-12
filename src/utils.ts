@@ -31,3 +31,30 @@ export const formatDate = (isoString: string): string => {
     minute: '2-digit'
   });
 };
+
+/**
+ * 이미지 URL을 올바르게 처리합니다
+ * - 완전한 URL(http://)이면 그대로 사용
+ * - 상대 경로면 백엔드 서버 URL을 추가
+ */
+export const getImageUrl = (imageUrl: string): string => {
+  if (!imageUrl) return '';
+  
+  // 이미 절대 URL이면 그대로 반환
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // 슬래시로 시작하지 않으면 추가
+  if (!imageUrl.startsWith('/')) {
+    imageUrl = '/' + imageUrl;
+  }
+  
+  // 백엔드 URL 직접 사용
+  const backendUrl = 'http://localhost:8000';
+  
+  // URL 시작 부분의 중복 슬래시 제거
+  const cleanPath = imageUrl.replace(/^\/+/, '/');
+  
+  return `${backendUrl}${cleanPath}`;
+};

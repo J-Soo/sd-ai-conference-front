@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, User, Trash2, Save, Loader2, AlertCircle, Plus, Image as ImageIcon, CheckSquare, Square, X } from 'lucide-react';
 import { Avatar } from '../types';
-import { formatDate } from '../utils';
+import { formatDate, getImageUrl } from '../utils';
 import ImageUploader from '../components/ImageUploader';
 import axios from 'axios';
 
@@ -87,10 +87,17 @@ const AvatarManagementPage: React.FC<AvatarManagementPageProps> = ({
     try {
       if (serverConnected) {
         try {
+          // 전체 URL 사용
           const response = await axios.get('http://localhost:8000/api/v1/avatars');
-          if (response.data && Array.isArray(response.data)) {
+          console.log('아바타 응답:', response);
+          
+          if (response.data && response.data.avatars && Array.isArray(response.data.avatars)) {
+            setAvatars(response.data.avatars);
+          } else if (response.data && Array.isArray(response.data)) {
+            // 백엔드가 배열을 직접 반환하는 경우
             setAvatars(response.data);
           } else {
+            console.error('API 응답 형식 오류:', response.data);
             setError('API에서 유효한 응답을 받지 못했습니다.');
             setAvatars(dummyAvatars);
           }
@@ -165,20 +172,33 @@ const AvatarManagementPage: React.FC<AvatarManagementPageProps> = ({
     try {
       if (serverConnected) {
         try {
+          // 먼저 이미지를 업로드
           const formData = new FormData();
-          formData.append('name', newAvatarForm.name.trim());
-          formData.append('description', newAvatarForm.description.trim());
-          formData.append('image', newAvatarForm.image);
+          formData.append('file', newAvatarForm.image);
 
-          const response = await axios.post('http://localhost:8000/api/v1/avatars', formData, {
+          const uploadResponse = await axios.post('http://localhost:8000/api/v1/avatars/upload', formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
           });
+          
+          console.log('업로드 응답:', uploadResponse);
 
-          if (response.data) {
-            setAvatars(prev => [response.data, ...prev]);
-            resetForm();
+          if (uploadResponse.data && uploadResponse.data.image_url) {
+            // 이미지 업로드 성공 후 아바타 정보 등록
+            const avatarData = {
+              name: newAvatarForm.name.trim(),
+              description: newAvatarForm.description.trim(),
+              image_url: uploadResponse.data.image_url
+            };
+
+            const response = await axios.post('http://localhost:8000/api/v1/avatars', avatarData);
+            console.log('아바타 생성 응답:', response);
+
+            if (response.data) {
+              setAvatars(prev => [response.data, ...prev]);
+              resetForm();
+            }
           }
         } catch (apiError: any) {
           if (apiError.response && apiError.response.status === 404) {
@@ -288,8 +308,8 @@ const AvatarManagementPage: React.FC<AvatarManagementPageProps> = ({
       
       if (serverConnected) {
         try {
-          await axios.delete('http://localhost:8000/api/v1/avatars/bulk', {
-            data: { avatar_ids: avatarIdsArray }
+          await axios.post('http://localhost:8000/api/v1/avatars/delete-multiple', {
+            avatar_ids: avatarIdsArray
           });
           
           setAvatars(prev => prev.filter(avatar => !selectedAvatarIds.has(avatar.id)));
@@ -624,7 +644,7 @@ const AvatarManagementPage: React.FC<AvatarManagementPageProps> = ({
                             )}
                             
                             <img
-                              src={avatar.image_url}
+                              src={getImageUrl(avatar.image_url)}
                               alt={avatar.name}
                               className="w-10 h-10 object-cover rounded-full"
                             />
@@ -688,7 +708,7 @@ const AvatarManagementPage: React.FC<AvatarManagementPageProps> = ({
                   <div className="space-y-4">
                     <div className="text-center">
                       <img
-                        src={selectedAvatar.image_url}
+                        src={getImageUrl(selectedAvatar.image_url)}
                         alt={selectedAvatar.name}
                         className="w-full max-w-xs mx-auto rounded-lg object-cover"
                       />

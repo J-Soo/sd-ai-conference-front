@@ -58,6 +58,26 @@ export interface VideoSegmentCustomization {
   updated_at: string;
 }
 
+export interface SegmentVideoConfig {
+  id: string;
+  script_id: string;
+  segment_id: string;
+  video_prompt?: string;
+  prompt_status: 'pending' | 'generating' | 'completed' | 'failed';
+  prompt_retry_count: number;
+  prompt_error_message?: string;
+  prompt_version: number;
+  is_user_modified: boolean;
+  original_prompt?: string;
+  use_avatar: boolean;
+  avatar_id?: string;
+  custom_image_url?: string;
+  last_modified_by: string;
+  modified_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface VideoGeneration {
   id: string;
   segment_id: string;
