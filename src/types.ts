@@ -26,6 +26,7 @@ export interface ScriptSegment {
   content: string;
   slide_reference?: string;
   created_at: string;
+  segment_video_config?: SegmentVideoConfig;
 }
 
 export interface AudioGeneration {

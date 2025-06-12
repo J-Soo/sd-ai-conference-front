@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, Pause, Download, Loader2, FileText, Clock, Calendar, Volume2, AlertCircle, Trash2, CheckSquare, Square, X } from 'lucide-react';
 import { Script, AudioGeneration } from '../types';
 import axios from 'axios';
@@ -6,14 +7,13 @@ import axios from 'axios';
 interface VoiceGenerationPageProps {
   darkMode: boolean;
   serverConnected: boolean;
-  onBack: () => void;
 }
 
 const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
   darkMode,
-  serverConnected,
-  onBack
+  serverConnected
 }) => {
+  const navigate = useNavigate();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [audioGeneration, setAudioGeneration] = useState<AudioGeneration | null>(null);
@@ -414,7 +414,7 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
         <button
-          onClick={onBack}
+          onClick={() => navigate('/')}
           className={`p-2 rounded-full transition-colors duration-200 ${
             darkMode 
               ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white' 

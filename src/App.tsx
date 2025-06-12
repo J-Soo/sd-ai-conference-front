@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Moon, Sun } from 'lucide-react';
 import Header from './components/Header';
 import ConnectionBanner from './components/ConnectionBanner';
@@ -7,12 +8,13 @@ import ScriptGenerationPage from './pages/ScriptGenerationPage';
 import VoiceGenerationPage from './pages/VoiceGenerationPage';
 import VideoManagementPage from './pages/VideoManagementPage';
 import AvatarManagementPage from './pages/AvatarManagementPage';
-import { PageType } from './types';
 
-function App() {
+// 라우터 내부에서 사용할 컴포넌트
+function AppContent() {
   const [darkMode, setDarkMode] = React.useState(false);
   const [serverConnected, setServerConnected] = React.useState<boolean>(false);
-  const [currentPage, setCurrentPage] = React.useState<PageType>('home');
+  const location = useLocation();
+  const navigate = useNavigate();
   
   // 백엔드 서버 연결 상태 확인
   useEffect(() => {
@@ -43,68 +45,22 @@ function App() {
   };
 
   const handleNavigateToVoiceGeneration = () => {
-    setCurrentPage('voice-generation');
+    navigate('/voice');
   };
 
   const handleHomeClick = () => {
-    setCurrentPage('home');
-  };
-
-  const renderCurrentPage = () => {
-    switch (currentPage) {
-      case 'script-generation':
-        return (
-          <ScriptGenerationPage
-            darkMode={darkMode}
-            serverConnected={serverConnected}
-            setServerConnected={setServerConnected}
-            onBack={() => setCurrentPage('home')}
-            onNavigateToVoiceGeneration={handleNavigateToVoiceGeneration}
-          />
-        );
-      case 'voice-generation':
-        return (
-          <VoiceGenerationPage
-            darkMode={darkMode}
-            serverConnected={serverConnected}
-            onBack={() => setCurrentPage('home')}
-          />
-        );
-      case 'video-management':
-        return (
-          <VideoManagementPage
-            darkMode={darkMode}
-            serverConnected={serverConnected}
-            onBack={() => setCurrentPage('home')}
-          />
-        );
-      case 'avatar-management':
-        return (
-          <AvatarManagementPage
-            darkMode={darkMode}
-            serverConnected={serverConnected}
-            onBack={() => setCurrentPage('home')}
-          />
-        );
-      default:
-        return (
-          <HomePage
-            darkMode={darkMode}
-            onNavigate={setCurrentPage}
-          />
-        );
-    }
+    navigate('/');
   };
 
   const getPageTitle = () => {
-    switch (currentPage) {
-      case 'script-generation':
+    switch (location.pathname) {
+      case '/scripts':
         return '대본 관리';
-      case 'voice-generation':
+      case '/voice':
         return '음성 관리';
-      case 'video-management':
+      case '/videos':
         return '영상 관리';
-      case 'avatar-management':
+      case '/avatars':
         return '아바타 관리';
       default:
         return '관리자 페이지';
@@ -130,7 +86,48 @@ function App() {
           </button>
         </div>
         
-        {renderCurrentPage()}
+        <Routes>
+          <Route path="/" element={
+            <HomePage
+              darkMode={darkMode}
+              onNavigate={(page) => {
+                const routeMap = {
+                  'script-generation': '/scripts',
+                  'voice-generation': '/voice',
+                  'video-management': '/videos',
+                  'avatar-management': '/avatars'
+                };
+                navigate(routeMap[page as keyof typeof routeMap] || '/');
+              }}
+            />
+          } />
+          <Route path="/scripts" element={
+            <ScriptGenerationPage
+              darkMode={darkMode}
+              serverConnected={serverConnected}
+              setServerConnected={setServerConnected}
+              onNavigateToVoiceGeneration={handleNavigateToVoiceGeneration}
+            />
+          } />
+          <Route path="/voice" element={
+            <VoiceGenerationPage
+              darkMode={darkMode}
+              serverConnected={serverConnected}
+            />
+          } />
+          <Route path="/videos" element={
+            <VideoManagementPage
+              darkMode={darkMode}
+              serverConnected={serverConnected}
+            />
+          } />
+          <Route path="/avatars" element={
+            <AvatarManagementPage
+              darkMode={darkMode}
+              serverConnected={serverConnected}
+            />
+          } />
+        </Routes>
       </main>
       
       <footer className={`py-6 ${darkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
@@ -139,6 +136,15 @@ function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// 메인 App 컴포넌트
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

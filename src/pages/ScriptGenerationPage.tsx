@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, Loader2, Calendar, Clock, Trash2, CheckSquare, Square, X, AlertCircle, Volume2, TestTube, FileSearch } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import FileManager from '../components/FileManager';
@@ -11,7 +12,6 @@ interface ScriptGenerationPageProps {
   darkMode: boolean;
   serverConnected: boolean;
   setServerConnected: (connected: boolean) => void;
-  onBack: () => void;
   onNavigateToVoiceGeneration: () => void;
 }
 
@@ -19,9 +19,9 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
   darkMode,
   serverConnected,
   setServerConnected,
-  onBack,
   onNavigateToVoiceGeneration
 }) => {
+  const navigate = useNavigate();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [loadingScripts, setLoadingScripts] = useState(true);
@@ -263,7 +263,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
     <div className="space-y-10">
       <div className="flex items-center space-x-4">
         <button
-          onClick={onBack}
+          onClick={() => navigate('/')}
           className={`p-2 rounded-full transition-colors duration-200 ${
             darkMode 
               ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white' 

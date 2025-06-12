@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Play, Download, Loader2, FileText, Calendar, Clock, Save, RotateCcw, Video, Image as ImageIcon, User, Check } from 'lucide-react';
 import { Script, ScriptSegment, VideoSegmentCustomization, VideoGeneration, Avatar } from '../types';
 import { formatDate, getImageUrl } from '../utils';
@@ -9,19 +10,19 @@ import axios from 'axios';
 interface VideoManagementPageProps {
   darkMode: boolean;
   serverConnected: boolean;
-  onBack: () => void;
 }
 
 const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
   darkMode,
-  serverConnected,
-  onBack
+  serverConnected
 }) => {
+  const navigate = useNavigate();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [segments, setSegments] = useState<ScriptSegment[]>([]);
   const [selectedSegment, setSelectedSegment] = useState<ScriptSegment | null>(null);
   const [customization, setCustomization] = useState<VideoSegmentCustomization | null>(null);
+  const [originalCustomization, setOriginalCustomization] = useState<VideoSegmentCustomization | null>(null);
   const [videoGenerations, setVideoGenerations] = useState<VideoGeneration[]>([]);
   const [selectedVideoGeneration, setSelectedVideoGeneration] = useState<VideoGeneration | null>(null);
   const [avatars, setAvatars] = useState<Avatar[]>([]);
@@ -43,7 +44,11 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
   const [loadingSegments, setLoadingSegments] = useState(false);
   const [savingCustomization, setSavingCustomization] = useState(false);
   const [generatingVideo, setGeneratingVideo] = useState(false);
+  const [generatingSingleVideo, setGeneratingSingleVideo] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // 영상 생성 상태 추적
+  const [generatedSegments, setGeneratedSegments] = useState<Set<string>>(new Set());
 
   // 더미 데이터
   const dummyScripts: Script[] = [
@@ -69,40 +74,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     }
   ];
 
-  const dummyAvatars: Avatar[] = [
-    {
-      id: 'avatar-1',
-      name: '비즈니스맨',
-      image_url: '/avatars/business-man.jpg',
-      description: '비즈니스 프레젠테이션에 적합한 아바타',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'avatar-2',
-      name: '여성 강사',
-      image_url: '/avatars/female-instructor.jpg',
-      description: '교육 및 강의 콘텐츠에 적합한 아바타',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'avatar-3',
-      name: '테크 전문가',
-      image_url: '/avatars/tech-expert.jpg',
-      description: '기술 관련 프레젠테이션에 적합한 아바타',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'avatar-4',
-      name: '캐주얼 스타일',
-      image_url: '/avatars/casual-style.jpg',
-      description: '친근한 분위기의 콘텐츠에 적합한 아바타',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ];
+  // 더미 아바타 데이터는 제거하고 실제 API 데이터만 사용
 
   const generateDummySegments = (scriptId: string): ScriptSegment[] => [
     {
@@ -164,6 +136,33 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     loadGlobalAvatarSettings();
   }, []);
 
+  // 세그먼트가 로드되면 비디오 설정 로드
+  useEffect(() => {
+    if (selectedScript && segments.length > 0 && serverConnected) {
+      loadVideoConfigs(selectedScript.id);
+    }
+  }, [segments, selectedScript?.id, serverConnected]);
+
+  // videoConfigs가 업데이트되고 현재 선택된 세그먼트가 있으면 커스터마이제이션 정보 업데이트
+  useEffect(() => {
+    if (selectedSegment && videoConfigs[selectedSegment.id]) {
+      const config = videoConfigs[selectedSegment.id];
+      
+      const updatedCustomization: VideoSegmentCustomization = {
+        id: config.id || `custom_${selectedSegment.id}`,
+        segment_id: selectedSegment.id,
+        use_avatar: config.use_avatar || false,
+        selected_avatar_id: config.avatar_id || (globalAvatarSettings.hasBeenAppliedBefore ? globalAvatarSettings.selectedAvatarId : ''),
+        custom_prompt: config.video_prompt || `${selectedSegment.content}에 대한 영상을 생성해주세요. 전문적이고 깔끔한 스타일로 제작해주세요.`,
+        custom_image_url: config.custom_image_url,
+        created_at: config.created_at || new Date().toISOString(),
+        updated_at: config.updated_at || new Date().toISOString()
+      };
+      
+      setCustomization(updatedCustomization);
+    }
+  }, [videoConfigs, selectedSegment?.id, globalAvatarSettings.hasBeenAppliedBefore, globalAvatarSettings.selectedAvatarId]);
+
   const loadScripts = async () => {
     setLoadingScripts(true);
     setError(null);
@@ -204,19 +203,39 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
       if (serverConnected) {
         try {
           const response = await axios.get('http://localhost:8000/api/v1/avatars');
-          if (response.data && Array.isArray(response.data)) {
+          console.log('영상관리 - 아바타 API 응답:', response.data);
+          
+          // 아바타 관리 페이지와 동일한 응답 처리 로직
+          if (response.data && response.data.avatars && Array.isArray(response.data.avatars)) {
+            console.log('아바타 데이터 (객체.avatars):', response.data.avatars);
+            setAvatars(response.data.avatars);
+          } else if (response.data && Array.isArray(response.data)) {
+            console.log('아바타 데이터 (직접 배열):', response.data);
             setAvatars(response.data);
           } else {
-            setAvatars(dummyAvatars);
+            console.error('아바타 API 응답 형식 오류:', response.data);
+            console.log('예상되는 형식: { avatars: [...] } 또는 [...]');
+            setAvatars([]);
           }
         } catch (apiError: any) {
-          setAvatars(dummyAvatars);
+          console.error('아바타 API 호출 오류:', apiError);
+          
+          if (apiError.response && apiError.response.status === 404) {
+            console.log('아바타 API가 아직 구현되지 않았습니다.');
+            setAvatars([]);
+          } else {
+            console.error(`아바타 로드 서버 오류: ${apiError.message || '알 수 없는 오류'}`);
+            setAvatars([]);
+          }
         }
       } else {
-        setAvatars(dummyAvatars);
+        // 테스트 모드: 빈 배열 (더미 데이터 제거)
+        console.log('서버 연결 안됨 - 아바타 목록 비움');
+        setAvatars([]);
       }
     } catch (err: any) {
-      setAvatars(dummyAvatars);
+      console.error('아바타를 불러오는 중 오류가 발생했습니다:', err);
+      setAvatars([]);
     }
   };
 
@@ -254,40 +273,40 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     }
   };
 
-  // 세그먼트 로드
+  // 스크립트에 속한 세그먼트 목록 로드
   const loadSegments = async (scriptId: string) => {
     setLoadingSegments(true);
     setError(null);
+    setSelectedSegment(null);
+    setCustomization(null);
 
     try {
       if (serverConnected) {
         try {
-          const response = await axios.get(`http://localhost:8000/api/v1/scripts/${scriptId}/segments`);
+          // auto_generate_prompts=true 파라미터를 추가하여 프롬프트 생성을 유도
+          const response = await axios.get(`http://localhost:8000/api/v1/scripts/${scriptId}/segments?auto_generate_prompts=true`);
           if (response.data && Array.isArray(response.data)) {
-            setSegments(response.data);
-            // 비디오 설정도 함께 로드
-            loadVideoConfigs(scriptId, response.data);
+            const fetchedSegments: ScriptSegment[] = response.data;
+            setSegments(fetchedSegments);
           } else {
             setError('세그먼트 API에서 유효한 응답을 받지 못했습니다.');
-            const dummySegs = generateDummySegments(scriptId);
-            setSegments(dummySegs);
-            setVideoConfigs(generateDummyVideoConfigs(scriptId, dummySegs));
+            setSegments([]);
           }
         } catch (apiError: any) {
           if (apiError.response && apiError.response.status === 404) {
-            const dummySegs = generateDummySegments(scriptId);
-            setSegments(dummySegs);
-            setVideoConfigs(generateDummyVideoConfigs(scriptId, dummySegs));
+            setError('세그먼트 정보를 찾을 수 없습니다.');
+            setSegments([]);
           } else {
             setError(`세그먼트 로드 오류: ${apiError.message || '알 수 없는 오류'}`);
             setSegments([]);
           }
         }
       } else {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const dummySegs = generateDummySegments(scriptId);
-        setSegments(dummySegs);
-        setVideoConfigs(generateDummyVideoConfigs(scriptId, dummySegs));
+        // 테스트 모드
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const dummySegments = generateDummySegments(scriptId);
+        setSegments(dummySegments);
+        setVideoConfigs(generateDummyVideoConfigs(scriptId, dummySegments));
       }
     } catch (err: any) {
       setError('세그먼트를 불러오는 중 오류가 발생했습니다.');
@@ -297,57 +316,74 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     }
   };
 
-  // 비디오 설정 로드 (상태 표시용)
-  const loadVideoConfigs = async (scriptId: string, segments: ScriptSegment[]) => {
+  // 비디오 설정 로드 (세그먼트별 개별 조회로 변경)
+  const loadVideoConfigs = async (scriptId: string) => {
+    if (!serverConnected) return; // 오프라인 모드에서는 세그먼트 로드 시 더미 데이터가 이미 설정됨
+    
+    // 세그먼트가 로드되지 않았으면 기다림
+    if (segments.length === 0) return;
+    
     try {
-      if (serverConnected) {
+      const configsMap: Record<string, any> = {};
+      
+      // 각 세그먼트에 대해 개별적으로 설정 조회 (설정이 없으면 자동 생성됨)
+      const configPromises = segments.map(async (segment) => {
         try {
-          const response = await axios.get(`http://localhost:8000/api/v1/segment-video-configs/by-script/${scriptId}`);
-          if (response.data && response.data.configs && Array.isArray(response.data.configs)) {
-            const configsMap: Record<string, any> = {};
-            response.data.configs.forEach((config: any) => {
-              configsMap[config.segment_id] = config;
-            });
-            setVideoConfigs(configsMap);
-          } else {
-            setVideoConfigs(generateDummyVideoConfigs(scriptId, segments));
+          const response = await axios.get(`http://localhost:8000/api/v1/segment-video-configs/by-segment/${segment.id}?script_id=${scriptId}`);
+          if (response.data) {
+            configsMap[segment.id] = response.data;
           }
-        } catch (apiError: any) {
-          setVideoConfigs(generateDummyVideoConfigs(scriptId, segments));
+        } catch (error: any) {
+          console.error(`세그먼트 ${segment.id}의 비디오 설정 조회 실패:`, error);
+          // 개별 세그먼트 조회 실패는 전체 로딩을 중단하지 않음
         }
-      } else {
-        setVideoConfigs(generateDummyVideoConfigs(scriptId, segments));
-      }
-    } catch (err: any) {
-      setVideoConfigs(generateDummyVideoConfigs(scriptId, segments));
+      });
+      
+      // 모든 세그먼트 설정 조회 완료 대기
+      await Promise.all(configPromises);
+      
+      setVideoConfigs(configsMap);
+      
+    } catch (error) {
+      console.error(`스크립트 ${scriptId}에 대한 비디오 설정을 불러오는 중 오류 발생`, error);
+      // 오류 발생 시에도 상태를 초기화하여 이전 데이터가 남지 않도록 함
+      setVideoConfigs({});
     }
   };
 
-  // 대본 선택 핸들러
+  // 스크립트 선택 처리
   const handleScriptSelect = async (script: Script) => {
     setSelectedScript(script);
-    setSelectedSegment(null);
-    setCustomization(null);
-    await loadSegments(script.id);
     setShowSegments(true);
+    // 생성된 세그먼트 상태 초기화
+    setGeneratedSegments(new Set());
+    // 먼저 세그먼트를 로드하고, 세그먼트 로드가 완료되면 비디오 설정 로드
+    await loadSegments(script.id);
+    // loadSegments 완료 후 segments 상태가 업데이트되기 전에 호출될 수 있으므로
+    // 비디오 설정 로드는 별도로 useEffect에서 처리
   };
 
-  // 세그먼트 선택 핸들러
+  // 세그먼트 선택 처리
   const handleSegmentSelect = (segment: ScriptSegment) => {
     setSelectedSegment(segment);
     
-    // 기본 커스터마이제이션 생성
-    const defaultCustomization: VideoSegmentCustomization = {
-      id: `custom_${segment.id}`,
+    // 백엔드 설정 데이터가 있으면 사용, 없으면 기본값 사용
+    const config = videoConfigs[segment.id];
+    
+    const customization: VideoSegmentCustomization = {
+      id: config?.id || `custom_${segment.id}`,
       segment_id: segment.id,
-      use_avatar: false,
-      selected_avatar_id: globalAvatarSettings.hasBeenAppliedBefore ? globalAvatarSettings.selectedAvatarId : '',
-      custom_prompt: `${segment.content}에 대한 영상을 생성해주세요. 전문적이고 깔끔한 스타일로 제작해주세요.`,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      use_avatar: config?.use_avatar || false,
+      selected_avatar_id: config?.avatar_id || (globalAvatarSettings.hasBeenAppliedBefore ? globalAvatarSettings.selectedAvatarId : ''),
+      custom_prompt: config?.video_prompt || `${segment.content}에 대한 영상을 생성해주세요. 전문적이고 깔끔한 스타일로 제작해주세요.`,
+      custom_image_url: config?.custom_image_url,
+      created_at: config?.created_at || new Date().toISOString(),
+      updated_at: config?.updated_at || new Date().toISOString()
     };
     
-    setCustomization(defaultCustomization);
+    setCustomization(customization);
+    // 초기화용 원본 데이터도 저장
+    setOriginalCustomization({...customization});
   };
 
   // 뒤로가기 핸들러
@@ -372,15 +408,36 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     }
   };
 
+  // 아바타 사용시 기본 프롬프트 생성
+  const generateAvatarPrompt = (segmentContent: string) => {
+    return `선택된 아바타가 다음 대본을 정확한 립싱크로 읽는 portrait 영상을 제작해주세요.
+
+[발표 내용]
+${segmentContent}
+
+[영상 요구사항]
+- Portrait 구도 유지 (상반신 또는 얼굴 중심)
+- 카메라 구도와 포지션 고정, 큰 움직임 없이 제작
+- 대본과 입 움직임의 정확한 립싱크에 최우선 집중
+- 자연스럽지만 최소한의 미묘한 제스처와 표정 변화
+- 과도한 손짓이나 몸짓 동작 지양
+- 깔끔하고 안정적인 배경
+- 전문적이고 차분한 발표 톤`;
+  };
+
   // 아바타 사용 토글
   const handleAvatarToggle = (useAvatar: boolean) => {
-    if (customization) {
+    if (customization && selectedSegment) {
       const updatedCustomization = {
         ...customization,
         use_avatar: useAvatar,
         custom_image: useAvatar ? undefined : customization.custom_image,
         custom_image_url: useAvatar ? undefined : customization.custom_image_url,
         selected_avatar_id: useAvatar && globalAvatarSettings.hasBeenAppliedBefore ? globalAvatarSettings.selectedAvatarId : customization.selected_avatar_id,
+        // 아바타 사용시 전용 프롬프트로 변경, 미사용시 원래 프롬프트로 복원
+        custom_prompt: useAvatar 
+          ? generateAvatarPrompt(selectedSegment.content)
+          : originalCustomization?.custom_prompt || `${selectedSegment.content}에 대한 영상을 생성해주세요. 전문적이고 깔끔한 스타일로 제작해주세요.`,
         updated_at: new Date().toISOString()
       };
       
@@ -437,20 +494,65 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
 
   // 커스터마이제이션 저장
   const handleSaveCustomization = async () => {
-    if (!customization) return;
+    if (!customization || !selectedSegment) return;
 
     setSavingCustomization(true);
     try {
       if (serverConnected) {
-        // 실제 API 호출
-        await axios.post(`http://localhost:8000/api/v1/video/customization`, customization);
+        // segment_video_config API를 사용하여 저장
+        const config = videoConfigs[selectedSegment.id];
+        
+        if (config && config.id) {
+          // 기존 설정이 있으면 업데이트
+          const updateData = {
+            use_avatar: customization.use_avatar,
+            avatar_id: customization.selected_avatar_id,
+            custom_image_url: customization.custom_image_url,
+            video_prompt: customization.custom_prompt
+          };
+          
+          console.log('세그먼트 설정 업데이트:', config.id, updateData);
+          
+          const response = await axios.put(
+            `http://localhost:8000/api/v1/segment-video-configs/${config.id}`, 
+            updateData
+          );
+          
+          // 로컬 videoConfigs 상태 업데이트
+          setVideoConfigs(prev => ({
+            ...prev,
+            [selectedSegment.id]: response.data
+          }));
+          
+        } else {
+          // 새로운 설정 생성
+          const createData = {
+            script_id: selectedScript?.id,
+            segment_id: selectedSegment.id,
+            use_avatar: customization.use_avatar,
+            avatar_id: customization.selected_avatar_id,
+            custom_image_url: customization.custom_image_url,
+            video_prompt: customization.custom_prompt
+          };
+          
+          console.log('새 세그먼트 설정 생성:', createData);
+          
+          const response = await axios.post(
+            'http://localhost:8000/api/v1/segment-video-configs/', 
+            createData
+          );
+          
+          // 로컬 videoConfigs 상태 업데이트
+          setVideoConfigs(prev => ({
+            ...prev,
+            [selectedSegment.id]: response.data
+          }));
+        }
         
         // 일괄 적용이 체크되어 있다면 글로벌 설정도 저장
         if (globalAvatarSettings.applyToAll) {
-          await axios.post('http://localhost:8000/api/v1/video/global-avatar-settings', {
-            selectedAvatarId: globalAvatarSettings.selectedAvatarId,
-            hasBeenAppliedBefore: true
-          });
+          // TODO: 글로벌 아바타 설정 API 구현 후 연동
+          console.log('글로벌 아바타 설정 저장:', globalAvatarSettings.selectedAvatarId);
           
           // 로컬 상태 업데이트
           setGlobalAvatarSettings(prev => ({
@@ -458,6 +560,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
             hasBeenAppliedBefore: true
           }));
         }
+        
       } else {
         // 테스트 모드
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -478,16 +581,63 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
         }
       }
       
-      // 성공 메시지 표시 (선택사항)
+      // 저장 성공 후 원본 데이터 업데이트
+      setOriginalCustomization({...customization});
       console.log('세그먼트 옵션이 저장되었습니다.');
     } catch (err: any) {
-      setError('세그먼트 옵션 저장 중 오류가 발생했습니다.');
+      console.error('세그먼트 옵션 저장 오류:', err);
+      setError(`세그먼트 옵션 저장 중 오류가 발생했습니다: ${err.response?.data?.detail || err.message}`);
     } finally {
       setSavingCustomization(false);
     }
   };
 
-  // 영상 생성
+  // 커스터마이제이션 초기화
+  const handleResetCustomization = () => {
+    if (!originalCustomization) return;
+    
+    // 원본 데이터로 복원
+    setCustomization({...originalCustomization});
+    
+    // 일괄 적용 체크박스도 초기화 (저장된 적이 없다면 false로)
+    if (!globalAvatarSettings.hasBeenAppliedBefore) {
+      setGlobalAvatarSettings(prev => ({
+        ...prev,
+        applyToAll: false
+      }));
+    }
+  };
+
+  // 단일 세그먼트 영상 생성
+  const handleGenerateSingleVideo = async () => {
+    if (!selectedSegment) return;
+
+    setGeneratingSingleVideo(true);
+    setError(null);
+
+    try {
+      if (serverConnected) {
+        // 실제 API 호출
+        const response = await axios.post(`http://localhost:8000/api/v1/videos/generate/segment/${selectedSegment.id}`);
+        
+        if (response.data.success) {
+          // 생성 성공한 세그먼트를 추적 목록에 추가
+          setGeneratedSegments(prev => new Set([...prev, selectedSegment.id]));
+          console.log(`세그먼트 ${selectedSegment.id} 영상 생성 완료`);
+        }
+      } else {
+        // 테스트 모드
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        setGeneratedSegments(prev => new Set([...prev, selectedSegment.id]));
+      }
+    } catch (err: any) {
+      setError(`세그먼트 영상 생성 중 오류가 발생했습니다: ${err.response?.data?.detail || err.message}`);
+    } finally {
+      setGeneratingSingleVideo(false);
+    }
+  };
+
+  // 일괄 영상 생성 (생성된 세그먼트 제외)
   const handleGenerateVideo = async () => {
     if (!selectedScript) return;
 
@@ -496,14 +646,34 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
 
     try {
       if (serverConnected) {
+        // 제외할 세그먼트 목록 (이미 생성된 세그먼트들)
+        const excludeSegments = Array.from(generatedSegments);
+        
+        const requestBody = excludeSegments.length > 0 ? {
+          exclude_segments: excludeSegments
+        } : {};
+
         // 실제 API 호출
-        const response = await axios.post(`http://localhost:8000/api/v1/video/generate/${selectedScript.id}`);
-        setVideoGenerations(response.data);
+        const response = await axios.post(
+          `http://localhost:8000/api/v1/videos/generate/${selectedScript.id}`,
+          requestBody
+        );
+        
+        setVideoGenerations(response.data.videos || []);
+        
+        // 성공한 세그먼트들을 추적 목록에 추가
+        if (response.data.videos) {
+          const newGeneratedSegments = response.data.videos.map((video: VideoGeneration) => video.segment_id);
+          setGeneratedSegments(prev => new Set([...prev, ...newGeneratedSegments]));
+        }
       } else {
         // 테스트 모드
         await new Promise(resolve => setTimeout(resolve, 3000));
         
-        const dummyVideos: VideoGeneration[] = segments.map(segment => ({
+        // 제외된 세그먼트를 빼고 더미 비디오 생성
+        const remainingSegments = segments.filter(segment => !generatedSegments.has(segment.id));
+        
+        const dummyVideos: VideoGeneration[] = remainingSegments.map(segment => ({
           id: `video_${segment.id}`,
           segment_id: segment.id,
           video_url: 'https://www.w3schools.com/html/mov_bbb.mp4', // 테스트용 비디오
@@ -513,11 +683,15 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
         }));
         
         setVideoGenerations(dummyVideos);
+        
+        // 생성된 세그먼트들을 추적 목록에 추가
+        const newGeneratedSegments = remainingSegments.map(segment => segment.id);
+        setGeneratedSegments(prev => new Set([...prev, ...newGeneratedSegments]));
       }
       
       setShowVideoResults(true);
     } catch (err: any) {
-      setError('영상 생성 중 오류가 발생했습니다.');
+      setError(`영상 생성 중 오류가 발생했습니다: ${err.response?.data?.detail || err.message}`);
     } finally {
       setGeneratingVideo(false);
     }
@@ -537,7 +711,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
         <button
-          onClick={onBack}
+          onClick={() => navigate('/')}
           className={`p-2 rounded-full transition-colors duration-200 ${
             darkMode 
               ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white' 
@@ -670,6 +844,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                     darkMode={darkMode}
                     showStatus={true}
                     isLoading={loadingSegments}
+                    error={error}
                     emptyMessage="세그먼트가 없습니다"
                     serverConnected={serverConnected}
                     theme="purple"
@@ -749,46 +924,63 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                               아바타 목록
                             </h6>
                             <div className="space-y-2 max-h-48 overflow-y-auto">
-                              {avatars.map((avatar) => (
-                                <div
-                                  key={avatar.id}
-                                  onClick={() => handleAvatarSelect(avatar.id)}
-                                  className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                                    customization.selected_avatar_id === avatar.id
-                                      ? darkMode 
-                                        ? 'bg-purple-600/20 border border-purple-500' 
-                                        : 'bg-purple-50 border border-purple-300'
-                                      : darkMode
-                                        ? 'hover:bg-gray-600/50'
-                                        : 'hover:bg-gray-100'
-                                  }`}
-                                >
-                                  <img
-                                    src={getImageUrl(avatar.image_url)}
-                                    alt={avatar.name}
-                                    className="w-10 h-10 object-cover rounded-full"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-medium truncate ${
-                                      customization.selected_avatar_id === avatar.id
-                                        ? darkMode ? 'text-purple-300' : 'text-purple-700'
-                                        : darkMode ? 'text-gray-300' : 'text-gray-700'
-                                    }`}>
-                                      {avatar.name}
-                                    </p>
-                                    <p className={`text-xs truncate ${
-                                      customization.selected_avatar_id === avatar.id
-                                        ? darkMode ? 'text-purple-400' : 'text-purple-600'
-                                        : darkMode ? 'text-gray-400' : 'text-gray-500'
-                                    }`}>
-                                      {avatar.description}
-                                    </p>
-                                  </div>
-                                  {customization.selected_avatar_id === avatar.id && (
-                                    <Check size={16} className={darkMode ? 'text-purple-400' : 'text-purple-600'} />
-                                  )}
+                              {avatars.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                  <User className={`mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={32} />
+                                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    등록된 아바타가 없습니다
+                                  </p>
+                                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                    아바타 관리에서 먼저 아바타를 등록해주세요
+                                  </p>
                                 </div>
-                              ))}
+                              ) : (
+                                avatars.map((avatar) => (
+                                  <div
+                                    key={avatar.id}
+                                    onClick={() => handleAvatarSelect(avatar.id)}
+                                    className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                                      customization.selected_avatar_id === avatar.id
+                                        ? darkMode 
+                                          ? 'bg-purple-600/20 border border-purple-500' 
+                                          : 'bg-purple-50 border border-purple-300'
+                                        : darkMode
+                                          ? 'hover:bg-gray-600/50'
+                                          : 'hover:bg-gray-100'
+                                    }`}
+                                  >
+                                    <img
+                                      src={getImageUrl(avatar.image_url)}
+                                      alt={avatar.name}
+                                      className="w-10 h-10 object-cover rounded-full"
+                                      onError={(e) => {
+                                        console.error('아바타 이미지 로드 실패:', avatar.image_url);
+                                        // 이미지 로드 실패 시 기본 이미지로 대체
+                                        (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNGM0Y0RjYiLz4KPHA+PGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNOCAzMkM4IDI2LjQ3NzIgMTIuNDc3MiAyMiAxOCAyMkMyMy41MjI4IDIyIDI4IDI2LjQ3NzIgMjggMzIiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+';
+                                      }}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-sm font-medium truncate ${
+                                        customization.selected_avatar_id === avatar.id
+                                          ? darkMode ? 'text-purple-300' : 'text-purple-700'
+                                          : darkMode ? 'text-gray-300' : 'text-gray-700'
+                                      }`}>
+                                        {avatar.name}
+                                      </p>
+                                      <p className={`text-xs truncate ${
+                                        customization.selected_avatar_id === avatar.id
+                                          ? darkMode ? 'text-purple-400' : 'text-purple-600'
+                                          : darkMode ? 'text-gray-400' : 'text-gray-500'
+                                      }`}>
+                                        {avatar.description}
+                                      </p>
+                                    </div>
+                                    {customization.selected_avatar_id === avatar.id && (
+                                      <Check size={16} className={darkMode ? 'text-purple-400' : 'text-purple-600'} />
+                                    )}
+                                  </div>
+                                ))
+                              )}
                             </div>
                           </div>
 
@@ -804,12 +996,27 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                                     src={getImageUrl(getSelectedAvatar()!.image_url)}
                                     alt={getSelectedAvatar()!.name}
                                     className="w-32 h-32 object-cover rounded-lg mx-auto mb-3"
+                                    onError={(e) => {
+                                      console.error('선택된 아바타 이미지 로드 실패:', getSelectedAvatar()!.image_url);
+                                      // 이미지 로드 실패 시 기본 이미지로 대체
+                                      (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiByeD0iOCIgZmlsbD0iI0YzRjRGNiIvPgo8Y2lyY2xlIGN4PSI2NCIgY3k9IjUyIiByPSIyMCIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNMjQgMTA0QzI0IDg2Ljg4MjkgMzcuODgyOSA3MyA1NSA3M0g3M0M5MC4xMTcxIDczIDEwNCA4Ni44ODI5IDEwNCAxMDQiIGZpbGw9IiM5Q0EzQUYiLz4KPHN2Zz4K';
+                                    }}
                                   />
                                   <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                     {getSelectedAvatar()!.name}
                                   </p>
                                   <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                     {getSelectedAvatar()!.description}
+                                  </p>
+                                </div>
+                              ) : avatars.length === 0 ? (
+                                <div className="text-center">
+                                  <User className={`mx-auto mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={48} />
+                                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    등록된 아바타가 없습니다
+                                  </p>
+                                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                    아바타 관리에서 아바타를 등록하세요
                                   </p>
                                 </div>
                               ) : (
@@ -838,31 +1045,54 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
 
                     {/* 기본 프롬프트 영역 */}
                     <div>
-                      <h5 className="font-medium mb-3">기본 프롬프트</h5>
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="font-medium">기본 프롬프트</h5>
+                        {customization?.use_avatar && (
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            darkMode ? 'bg-purple-600/20 text-purple-300' : 'bg-purple-100 text-purple-600'
+                          }`}>
+                            아바타 전용 프롬프트
+                          </span>
+                        )}
+                      </div>
                       <textarea
                         value={customization?.custom_prompt || ''}
                         onChange={(e) => handlePromptChange(e.target.value)}
-                        placeholder="영상 생성을 위한 프롬프트를 입력하세요..."
+                        placeholder={customization?.use_avatar 
+                          ? "아바타 사용시 자동으로 생성된 프롬프트입니다" 
+                          : "영상 생성을 위한 프롬프트를 입력하세요..."
+                        }
+                        disabled={customization?.use_avatar}
                         className={`w-full h-32 p-3 rounded-lg border resize-none ${
-                          darkMode 
-                            ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'
+                          customization?.use_avatar
+                            ? darkMode 
+                              ? 'bg-gray-800 border-gray-600 text-gray-400 cursor-not-allowed' 
+                              : 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed'
+                            : darkMode 
+                              ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'
                         }`}
                       />
+                      {customization?.use_avatar && (
+                        <p className={`text-xs mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          아바타 사용시 프롬프트는 자동으로 생성되며 수정할 수 없습니다. 아바타 사용을 해제하면 다시 편집할 수 있습니다.
+                        </p>
+                      )}
                     </div>
 
                     {/* 저장 및 초기화 버튼 */}
                     <div className="flex space-x-3">
                       <button
-                        onClick={() => {
-                          if (selectedSegment) {
-                            handleSegmentSelect(selectedSegment);
-                          }
-                        }}
+                        onClick={handleResetCustomization}
+                        disabled={!originalCustomization}
                         className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 ${
-                          darkMode 
-                            ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
-                            : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                          !originalCustomization
+                            ? darkMode 
+                              ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : darkMode 
+                              ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                              : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                         }`}
                       >
                         <RotateCcw size={16} />
@@ -893,6 +1123,45 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                           </>
                         )}
                       </button>
+                    </div>
+
+                    {/* 단일 세그먼트 영상 생성 버튼 */}
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <button
+                        onClick={handleGenerateSingleVideo}
+                        disabled={!selectedSegment || generatingSingleVideo || generatedSegments.has(selectedSegment?.id || '')}
+                        className={`w-full py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 ${
+                          !selectedSegment || generatingSingleVideo || generatedSegments.has(selectedSegment?.id || '')
+                            ? darkMode 
+                              ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : darkMode
+                              ? 'bg-green-600 hover:bg-green-500 text-white'
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                        }`}
+                      >
+                        {generatingSingleVideo ? (
+                          <>
+                            <Loader2 className="animate-spin" size={18} />
+                            <span>영상 생성 중...</span>
+                          </>
+                        ) : generatedSegments.has(selectedSegment?.id || '') ? (
+                          <>
+                            <Check size={18} />
+                            <span>이미 생성됨</span>
+                          </>
+                        ) : (
+                          <>
+                            <Video size={18} />
+                            <span>이 세그먼트 영상 생성</span>
+                          </>
+                        )}
+                      </button>
+                      {selectedSegment && generatedSegments.has(selectedSegment.id) && (
+                        <p className={`text-xs mt-2 text-center ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                          세그먼트 {selectedSegment.segment_index}의 영상이 생성되었습니다
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1026,32 +1295,78 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
 
       {/* 영상 생성하기 버튼 */}
       {!showVideoResults && selectedScript && segments.length > 0 && (
-        <div className="flex justify-center">
-          <button
-            onClick={handleGenerateVideo}
-            disabled={generatingVideo}
-            className={`px-8 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 ${
-              generatingVideo
-                ? darkMode 
-                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                : darkMode
-                  ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                  : 'bg-purple-600 hover:bg-purple-700 text-white'
-            }`}
-          >
-            {generatingVideo ? (
-              <>
-                <Loader2 className="animate-spin" size={20} />
-                <span>영상 생성 중...</span>
-              </>
-            ) : (
-              <>
-                <Video size={20} />
-                <span>영상 생성하기</span>
-              </>
+        <div className="flex flex-col items-center space-y-3">
+          {/* 생성 상태 정보 */}
+          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            총 {segments.length}개 세그먼트 중 {generatedSegments.size}개 생성됨
+            {generatedSegments.size > 0 && generatedSegments.size < segments.length && (
+              <span className={`ml-2 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                (남은 세그먼트: {segments.length - generatedSegments.size}개)
+              </span>
             )}
-          </button>
+          </div>
+          
+          {/* 버튼 영역 */}
+          <div className="flex space-x-4">
+            <button
+              onClick={handleGenerateVideo}
+              disabled={generatingVideo || generatedSegments.size === segments.length}
+              className={`px-8 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 ${
+                generatingVideo || generatedSegments.size === segments.length
+                  ? darkMode 
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : darkMode
+                    ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+              }`}
+            >
+              {generatingVideo ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  <span>일괄 생성 중...</span>
+                </>
+              ) : generatedSegments.size === segments.length ? (
+                <>
+                  <Check size={20} />
+                  <span>모든 영상 생성 완료</span>
+                </>
+              ) : generatedSegments.size > 0 ? (
+                <>
+                  <Video size={20} />
+                  <span>남은 영상 일괄 생성</span>
+                </>
+              ) : (
+                <>
+                  <Video size={20} />
+                  <span>모든 영상 일괄 생성</span>
+                </>
+              )}
+            </button>
+            
+            {/* 생성된 세그먼트 초기화 버튼 */}
+            {generatedSegments.size > 0 && (
+              <button
+                onClick={() => {
+                  setGeneratedSegments(new Set());
+                  console.log('생성된 세그먼트 목록이 초기화되었습니다.');
+                }}
+                disabled={generatingVideo || generatingSingleVideo}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 ${
+                  generatingVideo || generatingSingleVideo
+                    ? darkMode 
+                      ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : darkMode
+                      ? 'bg-gray-600 hover:bg-gray-500 text-white'
+                      : 'bg-gray-500 hover:bg-gray-600 text-white'
+                }`}
+              >
+                <RotateCcw size={18} />
+                <span>상태 초기화</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 

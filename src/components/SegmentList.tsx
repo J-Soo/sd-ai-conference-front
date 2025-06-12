@@ -110,31 +110,35 @@ const SegmentList: React.FC<SegmentListProps> = ({
     }
   };
 
-  // 마우스 이벤트 핸들러 - 위치 옵션에 따라 다르게 계산
+  // 마우스 이벤트 핸들러 - 개선된 위치 계산
   const handleMouseEnter = (segmentId: string, event: React.MouseEvent) => {
     if (!showStatus) return;
     
     const tooltipWidth = 500;
     const tooltipHeight = 200;
-    const margin = 15;
+    const margin = 12;
     
-    // 마우스 커서 위치를 기준으로 계산
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
+    // 이벤트 대상 요소의 위치 정보 가져오기
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    
+    // 요소의 중앙 위치 계산
+    const elementCenterX = rect.left + rect.width / 2;
+    const elementCenterY = rect.top + rect.height / 2;
     
     let x, y, showAbove = false;
     
     if (tooltipPosition === 'left') {
-      // 왼쪽 위치: 마우스 커서 기준으로 왼쪽에 표시
-      x = mouseX - tooltipWidth - margin;
+      // 왼쪽 위치: 요소 기준으로 왼쪽에 표시
+      x = rect.left - tooltipWidth - margin;
       
       // 왼쪽 공간이 부족하면 오른쪽에 표시
       if (x < 20) {
-        x = mouseX + margin;
+        x = rect.right + margin;
       }
       
-      // Y 위치는 마우스 커서 중심으로 조정
-      y = mouseY - tooltipHeight / 2;
+      // Y 위치는 요소 중심으로 조정
+      y = elementCenterY - tooltipHeight / 2;
       
       // 화면 위아래 경계 체크
       if (y < 20) {
@@ -143,8 +147,8 @@ const SegmentList: React.FC<SegmentListProps> = ({
         y = window.innerHeight - tooltipHeight - 20;
       }
     } else {
-      // 기본 위치 (top): 마우스 커서 위/아래에 표시
-      x = mouseX - tooltipWidth / 2;
+      // 기본 위치 (top): 요소 위/아래에 표시
+      x = elementCenterX - tooltipWidth / 2;
       
       // 화면 좌우 경계 체크 및 조정
       if (x < 20) {
@@ -153,13 +157,13 @@ const SegmentList: React.FC<SegmentListProps> = ({
         x = window.innerWidth - tooltipWidth - 20;
       }
       
-      // Y 위치 계산 (마우스 커서 위 또는 아래)
-      y = mouseY - tooltipHeight - margin;
+      // Y 위치 계산 (요소 위 또는 아래)
+      y = rect.top - tooltipHeight - margin;
       showAbove = true;
       
       // 위쪽 공간이 부족하면 아래쪽에 표시
       if (y < 20) {
-        y = mouseY + margin;
+        y = rect.bottom + margin;
         showAbove = false;
       }
     }
@@ -238,13 +242,13 @@ const SegmentList: React.FC<SegmentListProps> = ({
     return null;
   };
 
-  // 툴팁 컴포넌트 - 직접 렌더링 (포털 없이)
+  // 툴팁 컴포넌트 - 포털로 렌더링하여 z-index 문제 해결
   const renderTooltip = () => {
     if (!hoveredSegment || !showStatus) return null;
 
-    return (
+    const tooltipContent = (
       <div
-        className={`fixed w-[500px] max-w-[90vw] p-5 rounded-lg shadow-2xl border pointer-events-none z-[9999] ${
+        className={`fixed w-[500px] max-w-[90vw] p-5 rounded-lg shadow-2xl border pointer-events-none ${
           darkMode 
             ? 'bg-gray-900 border-gray-700 text-gray-200' 
             : 'bg-white border-gray-200 text-gray-800'
@@ -252,6 +256,7 @@ const SegmentList: React.FC<SegmentListProps> = ({
         style={{
           left: tooltipPos.x,
           top: tooltipPos.y,
+          zIndex: 50, // Tailwind의 z-50 클래스와 동일
         }}
       >
         <div className="text-sm font-semibold mb-3 pb-2 border-b border-gray-300 dark:border-gray-600">
@@ -286,6 +291,9 @@ const SegmentList: React.FC<SegmentListProps> = ({
         )}
       </div>
     );
+
+    // 포털을 사용하여 document.body에 직접 렌더링
+    return createPortal(tooltipContent, document.body);
   };
 
   if (isLoading) {
@@ -320,7 +328,7 @@ const SegmentList: React.FC<SegmentListProps> = ({
   }
 
   return (
-    <div className="relative">
+    <>
       <div className={`space-y-4 ${className}`}>
         {segments.map((segment) => (
           <div
@@ -374,9 +382,9 @@ const SegmentList: React.FC<SegmentListProps> = ({
         ))}
       </div>
 
-      {/* 툴팁 직접 렌더링 */}
+      {/* 툴팁 포털로 렌더링 */}
       {renderTooltip()}
-    </div>
+    </>
   );
 };
 
