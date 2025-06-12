@@ -107,15 +107,18 @@ const SegmentList: React.FC<SegmentListProps> = ({
     }
   };
 
-  // 마우스 이벤트 핸들러
+  // 마우스 이벤트 핸들러 - 위치 계산 개선
   const handleMouseEnter = (segmentId: string, event: React.MouseEvent) => {
     if (!showStatus) return;
     
     const rect = event.currentTarget.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
-    const tooltipWidth = 400; // 툴팁 예상 너비
+    const viewportHeight = window.innerHeight;
+    const tooltipWidth = 500; // 툴팁 너비 증가
+    const tooltipHeight = 200; // 예상 툴팁 높이
     
     let x = rect.left + rect.width / 2;
+    let y = rect.top - 15; // 뱃지 위쪽에 표시
     
     // 화면 오른쪽 끝을 벗어나는 경우 조정
     if (x + tooltipWidth / 2 > viewportWidth - 20) {
@@ -126,10 +129,12 @@ const SegmentList: React.FC<SegmentListProps> = ({
       x = tooltipWidth / 2 + 20;
     }
     
-    setTooltipPosition({
-      x: x,
-      y: rect.top - 10
-    });
+    // 화면 위쪽을 벗어나는 경우 뱃지 아래쪽에 표시
+    if (y - tooltipHeight < 20) {
+      y = rect.bottom + 15;
+    }
+    
+    setTooltipPosition({ x, y });
     setHoveredSegment(segmentId);
   };
 
@@ -287,10 +292,14 @@ const SegmentList: React.FC<SegmentListProps> = ({
         </div>
       ))}
 
-      {/* 툴팁 - 크기 대폭 확대 */}
+      {/* 툴팁 - 크기 대폭 확대 및 위치 개선 */}
       {hoveredSegment && showStatus && (
         <div
-          className={`fixed z-50 w-96 max-w-lg p-4 rounded-lg shadow-xl border pointer-events-none transform -translate-x-1/2 -translate-y-full ${
+          className={`fixed z-[9999] w-[500px] max-w-[90vw] p-5 rounded-lg shadow-2xl border pointer-events-none transform -translate-x-1/2 ${
+            tooltipPosition.y > window.innerHeight / 2 
+              ? '-translate-y-full' 
+              : 'translate-y-2'
+          } ${
             darkMode 
               ? 'bg-gray-900 border-gray-700 text-gray-200' 
               : 'bg-white border-gray-200 text-gray-800'
@@ -303,7 +312,7 @@ const SegmentList: React.FC<SegmentListProps> = ({
           <div className="text-sm font-semibold mb-3 pb-2 border-b border-gray-300 dark:border-gray-600">
             생성된 프롬프트
           </div>
-          <div className="text-sm leading-relaxed max-h-40 overflow-y-auto">
+          <div className="text-sm leading-relaxed max-h-48 overflow-y-auto pr-2">
             {getPromptContent(hoveredSegment)}
           </div>
           {!serverConnected && (
@@ -312,10 +321,12 @@ const SegmentList: React.FC<SegmentListProps> = ({
             </div>
           )}
           
-          {/* 툴팁 화살표 */}
+          {/* 툴팁 화살표 - 위치에 따라 조정 */}
           <div 
-            className={`absolute left-1/2 transform -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${
-              darkMode ? 'border-t-gray-900' : 'border-t-white'
+            className={`absolute left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-transparent ${
+              tooltipPosition.y > window.innerHeight / 2
+                ? `top-full border-t-4 ${darkMode ? 'border-t-gray-900' : 'border-t-white'}`
+                : `bottom-full border-b-4 ${darkMode ? 'border-b-gray-900' : 'border-b-white'}`
             }`}
           />
         </div>
