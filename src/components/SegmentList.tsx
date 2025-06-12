@@ -34,26 +34,6 @@ const SegmentList: React.FC<SegmentListProps> = ({
 }) => {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0, showAbove: false });
-  const [tooltipElement, setTooltipElement] = useState<HTMLElement | null>(null);
-
-  // 툴팁 컨테이너 생성
-  useEffect(() => {
-    const element = document.createElement('div');
-    element.id = 'segment-tooltip-portal';
-    element.style.position = 'absolute';
-    element.style.top = '0';
-    element.style.left = '0';
-    element.style.zIndex = '9999';
-    element.style.pointerEvents = 'none';
-    document.body.appendChild(element);
-    setTooltipElement(element);
-
-    return () => {
-      if (document.body.contains(element)) {
-        document.body.removeChild(element);
-      }
-    };
-  }, []);
 
   // 테마별 색상 정의
   const getThemeColors = (theme: string) => {
@@ -128,23 +108,20 @@ const SegmentList: React.FC<SegmentListProps> = ({
     }
   };
 
-  // 마우스 이벤트 핸들러 - 정확한 위치 계산
+  // 마우스 이벤트 핸들러 - 마우스 커서 위치 기준으로 계산
   const handleMouseEnter = (segmentId: string, event: React.MouseEvent) => {
     if (!showStatus) return;
-    
-    const badgeElement = event.currentTarget as HTMLElement;
-    const rect = badgeElement.getBoundingClientRect();
     
     const tooltipWidth = 500;
     const tooltipHeight = 200;
     const margin = 15;
     
-    // 뱃지 중앙을 기준으로 계산
-    const badgeCenterX = rect.left + rect.width / 2;
-    const badgeCenterY = rect.top + rect.height / 2;
+    // 마우스 커서 위치를 기준으로 계산
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
     
-    // 툴팁 X 위치 계산 (화면 중앙 기준)
-    let x = badgeCenterX - tooltipWidth / 2;
+    // 툴팁 X 위치 계산 (마우스 커서 중심)
+    let x = mouseX - tooltipWidth / 2;
     
     // 화면 경계 체크 및 조정
     if (x < 20) {
@@ -153,13 +130,13 @@ const SegmentList: React.FC<SegmentListProps> = ({
       x = window.innerWidth - tooltipWidth - 20;
     }
     
-    // 툴팁 Y 위치 계산 (뱃지 위 또는 아래)
-    let y = rect.top - tooltipHeight - margin;
+    // 툴팁 Y 위치 계산 (마우스 커서 위 또는 아래)
+    let y = mouseY - tooltipHeight - margin;
     let showAbove = true;
     
     // 위쪽 공간이 부족하면 아래쪽에 표시
     if (y < 20) {
-      y = rect.bottom + margin;
+      y = mouseY + margin;
       showAbove = false;
     }
     
@@ -237,13 +214,13 @@ const SegmentList: React.FC<SegmentListProps> = ({
     return null;
   };
 
-  // 툴팁 컴포넌트
+  // 툴팁 컴포넌트 - 직접 렌더링 (포털 없이)
   const renderTooltip = () => {
-    if (!hoveredSegment || !showStatus || !tooltipElement) return null;
+    if (!hoveredSegment || !showStatus) return null;
 
-    return createPortal(
+    return (
       <div
-        className={`absolute w-[500px] max-w-[90vw] p-5 rounded-lg shadow-2xl border pointer-events-none ${
+        className={`fixed w-[500px] max-w-[90vw] p-5 rounded-lg shadow-2xl border pointer-events-none z-[9999] ${
           darkMode 
             ? 'bg-gray-900 border-gray-700 text-gray-200' 
             : 'bg-white border-gray-200 text-gray-800'
@@ -273,8 +250,7 @@ const SegmentList: React.FC<SegmentListProps> = ({
               : `bottom-full border-b-4 ${darkMode ? 'border-b-gray-900' : 'border-b-white'}`
           }`}
         />
-      </div>,
-      tooltipElement
+      </div>
     );
   };
 
@@ -310,7 +286,7 @@ const SegmentList: React.FC<SegmentListProps> = ({
   }
 
   return (
-    <>
+    <div className="relative">
       <div className={`space-y-4 ${className}`}>
         {segments.map((segment) => (
           <div
@@ -364,9 +340,9 @@ const SegmentList: React.FC<SegmentListProps> = ({
         ))}
       </div>
 
-      {/* 포털을 통해 렌더링되는 툴팁 */}
+      {/* 툴팁 직접 렌더링 */}
       {renderTooltip()}
-    </>
+    </div>
   );
 };
 
