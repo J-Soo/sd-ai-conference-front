@@ -33,13 +33,18 @@ const SegmentList: React.FC<SegmentListProps> = ({
   theme = 'blue'
 }) => {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0, showAbove: false });
   const [tooltipElement, setTooltipElement] = useState<HTMLElement | null>(null);
 
   // 툴팁 컨테이너 생성
   useEffect(() => {
     const element = document.createElement('div');
     element.id = 'segment-tooltip-portal';
+    element.style.position = 'absolute';
+    element.style.top = '0';
+    element.style.left = '0';
+    element.style.zIndex = '9999';
+    element.style.pointerEvents = 'none';
     document.body.appendChild(element);
     setTooltipElement(element);
 
@@ -123,35 +128,42 @@ const SegmentList: React.FC<SegmentListProps> = ({
     }
   };
 
-  // 마우스 이벤트 핸들러 - 절대 위치 계산
+  // 마우스 이벤트 핸들러 - 정확한 위치 계산
   const handleMouseEnter = (segmentId: string, event: React.MouseEvent) => {
     if (!showStatus) return;
     
-    const rect = event.currentTarget.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    const badgeElement = event.currentTarget as HTMLElement;
+    const rect = badgeElement.getBoundingClientRect();
+    
     const tooltipWidth = 500;
     const tooltipHeight = 200;
+    const margin = 15;
     
-    // 절대 위치 계산 (스크롤 고려)
-    let x = rect.left + rect.width / 2 + window.scrollX;
-    let y = rect.top - 15 + window.scrollY;
+    // 뱃지 중앙을 기준으로 계산
+    const badgeCenterX = rect.left + rect.width / 2;
+    const badgeCenterY = rect.top + rect.height / 2;
     
-    // 화면 오른쪽 끝을 벗어나는 경우 조정
-    if (rect.left + tooltipWidth / 2 > viewportWidth - 20) {
-      x = viewportWidth - tooltipWidth / 2 - 20 + window.scrollX;
-    }
-    // 화면 왼쪽 끝을 벗어나는 경우 조정
-    if (rect.left - tooltipWidth / 2 < 20) {
-      x = tooltipWidth / 2 + 20 + window.scrollX;
-    }
+    // 툴팁 X 위치 계산 (화면 중앙 기준)
+    let x = badgeCenterX - tooltipWidth / 2;
     
-    // 화면 위쪽을 벗어나는 경우 뱃지 아래쪽에 표시
-    if (rect.top - tooltipHeight < 20) {
-      y = rect.bottom + 15 + window.scrollY;
+    // 화면 경계 체크 및 조정
+    if (x < 20) {
+      x = 20;
+    } else if (x + tooltipWidth > window.innerWidth - 20) {
+      x = window.innerWidth - tooltipWidth - 20;
     }
     
-    setTooltipPosition({ x, y });
+    // 툴팁 Y 위치 계산 (뱃지 위 또는 아래)
+    let y = rect.top - tooltipHeight - margin;
+    let showAbove = true;
+    
+    // 위쪽 공간이 부족하면 아래쪽에 표시
+    if (y < 20) {
+      y = rect.bottom + margin;
+      showAbove = false;
+    }
+    
+    setTooltipPosition({ x, y, showAbove });
     setHoveredSegment(segmentId);
   };
 
@@ -229,13 +241,9 @@ const SegmentList: React.FC<SegmentListProps> = ({
   const renderTooltip = () => {
     if (!hoveredSegment || !showStatus || !tooltipElement) return null;
 
-    const isAbove = tooltipPosition.y > window.innerHeight / 2 + window.scrollY;
-
     return createPortal(
       <div
-        className={`fixed z-[9999] w-[500px] max-w-[90vw] p-5 rounded-lg shadow-2xl border pointer-events-none transform -translate-x-1/2 ${
-          isAbove ? '-translate-y-full' : 'translate-y-2'
-        } ${
+        className={`absolute w-[500px] max-w-[90vw] p-5 rounded-lg shadow-2xl border pointer-events-none ${
           darkMode 
             ? 'bg-gray-900 border-gray-700 text-gray-200' 
             : 'bg-white border-gray-200 text-gray-800'
@@ -257,10 +265,10 @@ const SegmentList: React.FC<SegmentListProps> = ({
           </div>
         )}
         
-        {/* 툴팁 화살표 - 위치에 따라 조정 */}
+        {/* 툴팁 화살표 */}
         <div 
           className={`absolute left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-transparent ${
-            isAbove
+            tooltipPosition.showAbove
               ? `top-full border-t-4 ${darkMode ? 'border-t-gray-900' : 'border-t-white'}`
               : `bottom-full border-b-4 ${darkMode ? 'border-b-gray-900' : 'border-b-white'}`
           }`}
