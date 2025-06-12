@@ -437,6 +437,7 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
               emptyMessage="이 대본에는 세그먼트가 없습니다"
               serverConnected={serverConnected}
               theme="blue"
+              tooltipPosition="top"
             />
           </div>
         )}

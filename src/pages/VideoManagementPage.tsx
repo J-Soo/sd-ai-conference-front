@@ -673,6 +673,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                     emptyMessage="세그먼트가 없습니다"
                     serverConnected={serverConnected}
                     theme="purple"
+                    tooltipPosition="left"
                   />
                 </div>
               </div>

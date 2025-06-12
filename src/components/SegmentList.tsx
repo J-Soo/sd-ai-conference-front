@@ -16,6 +16,7 @@ interface SegmentListProps {
   className?: string;
   serverConnected?: boolean; // 서버 연결 상태
   theme?: 'blue' | 'purple' | 'green' | 'orange'; // 테마 색상
+  tooltipPosition?: 'top' | 'left'; // 툴팁 위치 옵션 추가
 }
 
 const SegmentList: React.FC<SegmentListProps> = ({
@@ -30,10 +31,11 @@ const SegmentList: React.FC<SegmentListProps> = ({
   emptyMessage = "세그먼트가 없습니다",
   className = "",
   serverConnected = false,
-  theme = 'blue'
+  theme = 'blue',
+  tooltipPosition = 'top' // 기본값은 'top'
 }) => {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0, showAbove: false });
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0, showAbove: false });
 
   // 테마별 색상 정의
   const getThemeColors = (theme: string) => {
@@ -108,7 +110,7 @@ const SegmentList: React.FC<SegmentListProps> = ({
     }
   };
 
-  // 마우스 이벤트 핸들러 - 마우스 커서 위치 기준으로 계산
+  // 마우스 이벤트 핸들러 - 위치 옵션에 따라 다르게 계산
   const handleMouseEnter = (segmentId: string, event: React.MouseEvent) => {
     if (!showStatus) return;
     
@@ -120,27 +122,49 @@ const SegmentList: React.FC<SegmentListProps> = ({
     const mouseX = event.clientX;
     const mouseY = event.clientY;
     
-    // 툴팁 X 위치 계산 (마우스 커서 중심)
-    let x = mouseX - tooltipWidth / 2;
+    let x, y, showAbove = false;
     
-    // 화면 경계 체크 및 조정
-    if (x < 20) {
-      x = 20;
-    } else if (x + tooltipWidth > window.innerWidth - 20) {
-      x = window.innerWidth - tooltipWidth - 20;
+    if (tooltipPosition === 'left') {
+      // 왼쪽 위치: 마우스 커서 기준으로 왼쪽에 표시
+      x = mouseX - tooltipWidth - margin;
+      
+      // 왼쪽 공간이 부족하면 오른쪽에 표시
+      if (x < 20) {
+        x = mouseX + margin;
+      }
+      
+      // Y 위치는 마우스 커서 중심으로 조정
+      y = mouseY - tooltipHeight / 2;
+      
+      // 화면 위아래 경계 체크
+      if (y < 20) {
+        y = 20;
+      } else if (y + tooltipHeight > window.innerHeight - 20) {
+        y = window.innerHeight - tooltipHeight - 20;
+      }
+    } else {
+      // 기본 위치 (top): 마우스 커서 위/아래에 표시
+      x = mouseX - tooltipWidth / 2;
+      
+      // 화면 좌우 경계 체크 및 조정
+      if (x < 20) {
+        x = 20;
+      } else if (x + tooltipWidth > window.innerWidth - 20) {
+        x = window.innerWidth - tooltipWidth - 20;
+      }
+      
+      // Y 위치 계산 (마우스 커서 위 또는 아래)
+      y = mouseY - tooltipHeight - margin;
+      showAbove = true;
+      
+      // 위쪽 공간이 부족하면 아래쪽에 표시
+      if (y < 20) {
+        y = mouseY + margin;
+        showAbove = false;
+      }
     }
     
-    // 툴팁 Y 위치 계산 (마우스 커서 위 또는 아래)
-    let y = mouseY - tooltipHeight - margin;
-    let showAbove = true;
-    
-    // 위쪽 공간이 부족하면 아래쪽에 표시
-    if (y < 20) {
-      y = mouseY + margin;
-      showAbove = false;
-    }
-    
-    setTooltipPosition({ x, y, showAbove });
+    setTooltipPos({ x, y, showAbove });
     setHoveredSegment(segmentId);
   };
 
@@ -226,8 +250,8 @@ const SegmentList: React.FC<SegmentListProps> = ({
             : 'bg-white border-gray-200 text-gray-800'
         }`}
         style={{
-          left: tooltipPosition.x,
-          top: tooltipPosition.y,
+          left: tooltipPos.x,
+          top: tooltipPos.y,
         }}
       >
         <div className="text-sm font-semibold mb-3 pb-2 border-b border-gray-300 dark:border-gray-600">
@@ -242,14 +266,24 @@ const SegmentList: React.FC<SegmentListProps> = ({
           </div>
         )}
         
-        {/* 툴팁 화살표 */}
-        <div 
-          className={`absolute left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-transparent ${
-            tooltipPosition.showAbove
-              ? `top-full border-t-4 ${darkMode ? 'border-t-gray-900' : 'border-t-white'}`
-              : `bottom-full border-b-4 ${darkMode ? 'border-b-gray-900' : 'border-b-white'}`
-          }`}
-        />
+        {/* 툴팁 화살표 - 위치에 따라 다르게 표시 */}
+        {tooltipPosition === 'left' ? (
+          // 왼쪽 위치일 때는 오른쪽에 화살표
+          <div 
+            className={`absolute top-1/2 transform -translate-y-1/2 left-full w-0 h-0 border-t-4 border-b-4 border-transparent ${
+              darkMode ? 'border-l-4 border-l-gray-900' : 'border-l-4 border-l-white'
+            }`}
+          />
+        ) : (
+          // 위/아래 위치일 때는 위/아래에 화살표
+          <div 
+            className={`absolute left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-transparent ${
+              tooltipPos.showAbove
+                ? `top-full border-t-4 ${darkMode ? 'border-t-gray-900' : 'border-t-white'}`
+                : `bottom-full border-b-4 ${darkMode ? 'border-b-gray-900' : 'border-b-white'}`
+            }`}
+          />
+        )}
       </div>
     );
   };
