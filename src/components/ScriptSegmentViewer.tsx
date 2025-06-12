@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ScriptSegment, Script, SegmentVideoConfig } from '../types';
-import { FileText, Loader2, AlertCircle, Hash, FileIcon, CheckCircle } from 'lucide-react';
+import { FileText, Loader2, TestTube } from 'lucide-react';
+import SegmentList from './SegmentList';
 import axios from 'axios';
 
 interface ScriptSegmentViewerProps {
@@ -380,54 +381,6 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
     }
   }, [serverConnected, segments]);
 
-  // 세그먼트 상단에 프롬프트 상태 뱃지 렌더링
-  const renderPromptStatusBadge = (segmentId: string) => {
-    const config = videoConfigs[segmentId];
-    
-    // 설정이 없거나 pending 상태인 경우
-    if (!config || config.prompt_status === 'pending') {
-      return (
-        <div className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 ${
-          darkMode ? 'bg-gray-700/50 text-gray-400' : 'bg-gray-200 text-gray-600'
-        }`}>
-          <Loader2 size={12} className="animate-spin" />
-          <span>생성 대기 중</span>
-        </div>
-      );
-    }
-    
-    if (config.prompt_status === 'completed') {
-      return (
-        <div className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 ${
-          darkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-700'
-        }`}>
-          <CheckCircle size={12} />
-          <span>생성 완료</span>
-        </div>
-      );
-    } else if (config.prompt_status === 'generating') {
-      return (
-        <div className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 ${
-          darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-700'
-        }`}>
-          <Loader2 size={12} className="animate-spin" />
-          <span>생성 중...</span>
-        </div>
-      );
-    } else if (config.prompt_status === 'failed') {
-      return (
-        <div className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 ${
-          darkMode ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-700'
-        }`}>
-          <AlertCircle size={12} />
-          <span>생성 실패</span>
-        </div>
-      );
-    }
-    
-    return null;
-  };
-
   return (
     <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
       <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -444,6 +397,7 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
             )}
             {!serverConnected && selectedScript && (
               <div className="flex items-center space-x-1">
+                <TestTube className={`${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} size={16} />
                 <span className={`text-xs ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
                   테스트 데이터
                 </span>
@@ -461,25 +415,6 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
               대본을 선택하면 세그먼트가 표시됩니다
             </p>
           </div>
-        ) : isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className={`animate-spin ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={24} />
-            <span className="ml-2">세그먼트 로드 중...</span>
-          </div>
-        ) : error ? (
-          <div className={`p-4 rounded-lg border ${darkMode ? 'bg-red-900/20 border-red-700 text-red-400' : 'bg-red-50 border-red-200 text-red-700'}`}>
-            <div className="flex items-center space-x-2">
-              <AlertCircle size={16} />
-              <span className="text-sm">{error}</span>
-            </div>
-          </div>
-        ) : segments.length === 0 ? (
-          <div className="text-center py-8">
-            <FileText className={`mx-auto mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={32} />
-            <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-              이 대본에는 세그먼트가 없습니다
-            </p>
-          </div>
         ) : (
           <div className="space-y-4">
             <div className="mb-4">
@@ -492,61 +427,15 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
               </p>
             </div>
             
-            {segments.map((segment, index) => (
-              <div
-                key={segment.id}
-                className={`p-4 rounded-lg border transition-colors duration-200 relative ${
-                  darkMode 
-                    ? 'border-gray-600 bg-gray-700/30 hover:bg-gray-700/50' 
-                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-                }`}
-              >
-                {renderPromptStatusBadge(segment.id)}
-                
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-                      darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600'
-                    }`}>
-                      {segment.segment_index}
-                    </div>
-                    <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      세그먼트 {segment.segment_index}
-                    </span>
-                  </div>
-                  
-                  {segment.slide_reference && (
-                    <div className="flex items-center space-x-1 text-xs">
-                      <FileIcon size={12} />
-                      <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                        {segment.slide_reference}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {segment.content.split('\n').map((line, lineIndex) => (
-                    <p key={lineIndex} className="mb-1">
-                      {line || '\u00A0'}
-                    </p>
-                  ))}
-                </div>
-                
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
-                  <div className="flex items-center space-x-1 text-xs">
-                    <Hash size={10} />
-                    <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>
-                      ID: {segment.id}
-                    </span>
-                  </div>
-                  
-                  <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                    {new Date(segment.created_at).toLocaleDateString('ko-KR')}
-                  </span>
-                </div>
-              </div>
-            ))}
+            <SegmentList
+              segments={segments}
+              videoConfigs={videoConfigs}
+              darkMode={darkMode}
+              showStatus={true}
+              isLoading={isLoading}
+              error={error}
+              emptyMessage="이 대본에는 세그먼트가 없습니다"
+            />
           </div>
         )}
       </div>

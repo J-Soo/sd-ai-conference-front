@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Play, Download, Loader2, FileText, Calendar, Clo
 import { Script, ScriptSegment, VideoSegmentCustomization, VideoGeneration, Avatar } from '../types';
 import { formatDate, getImageUrl } from '../utils';
 import ImageUploader from '../components/ImageUploader';
+import SegmentList from '../components/SegmentList';
 import axios from 'axios';
 
 interface VideoManagementPageProps {
@@ -598,49 +599,15 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                   </div>
                 </div>
                 <div className="p-6 h-[calc(100%-5rem)] overflow-y-auto">
-                  {loadingSegments ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className={`animate-spin ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={24} />
-                      <span className="ml-2">세그먼트 로드 중...</span>
-                    </div>
-                  ) : segments.length === 0 ? (
-                    <div className="text-center py-8">
-                      <FileText className={`mx-auto mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={32} />
-                      <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                        세그먼트가 없습니다
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {segments.map((segment) => (
-                        <div
-                          key={segment.id}
-                          onClick={() => handleSegmentSelect(segment)}
-                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                            selectedSegment?.id === segment.id
-                              ? darkMode 
-                                ? 'border-purple-500 bg-purple-900/20' 
-                                : 'border-purple-500 bg-purple-50'
-                              : darkMode
-                                ? 'border-gray-600 hover:border-gray-500 bg-gray-700/50 hover:bg-gray-700'
-                                : 'border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2 mb-2">
-                            <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-                              darkMode ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-600'
-                            }`}>
-                              {segment.segment_index}
-                            </div>
-                            <span className="font-medium">세그먼트 {segment.segment_index}</span>
-                          </div>
-                          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} line-clamp-2`}>
-                            {segment.content}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <SegmentList
+                    segments={segments}
+                    selectedSegment={selectedSegment}
+                    onSegmentSelect={handleSegmentSelect}
+                    darkMode={darkMode}
+                    showStatus={false}
+                    isLoading={loadingSegments}
+                    emptyMessage="세그먼트가 없습니다"
+                  />
                 </div>
               </div>
             </div>
