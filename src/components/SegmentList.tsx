@@ -14,6 +14,7 @@ interface SegmentListProps {
   emptyMessage?: string;
   className?: string;
   serverConnected?: boolean; // 서버 연결 상태
+  theme?: 'blue' | 'purple' | 'green' | 'orange'; // 테마 색상
 }
 
 const SegmentList: React.FC<SegmentListProps> = ({
@@ -27,30 +28,64 @@ const SegmentList: React.FC<SegmentListProps> = ({
   error = null,
   emptyMessage = "세그먼트가 없습니다",
   className = "",
-  serverConnected = false
+  serverConnected = false,
+  theme = 'blue'
 }) => {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+
+  // 테마별 색상 정의
+  const getThemeColors = (theme: string) => {
+    const themes = {
+      blue: {
+        badge: darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600',
+        badgeSelected: darkMode ? 'bg-blue-500 text-white' : 'bg-blue-600 text-white',
+        border: darkMode ? 'border-blue-500 bg-blue-900/20' : 'border-blue-500 bg-blue-50',
+        loading: darkMode ? 'text-blue-400' : 'text-blue-600'
+      },
+      purple: {
+        badge: darkMode ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-600',
+        badgeSelected: darkMode ? 'bg-purple-500 text-white' : 'bg-purple-600 text-white',
+        border: darkMode ? 'border-purple-500 bg-purple-900/20' : 'border-purple-500 bg-purple-50',
+        loading: darkMode ? 'text-purple-400' : 'text-purple-600'
+      },
+      green: {
+        badge: darkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-600',
+        badgeSelected: darkMode ? 'bg-green-500 text-white' : 'bg-green-600 text-white',
+        border: darkMode ? 'border-green-500 bg-green-900/20' : 'border-green-500 bg-green-50',
+        loading: darkMode ? 'text-green-400' : 'text-green-600'
+      },
+      orange: {
+        badge: darkMode ? 'bg-orange-600 text-white' : 'bg-orange-100 text-orange-600',
+        badgeSelected: darkMode ? 'bg-orange-500 text-white' : 'bg-orange-600 text-white',
+        border: darkMode ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50',
+        loading: darkMode ? 'text-orange-400' : 'text-orange-600'
+      }
+    };
+    return themes[theme as keyof typeof themes] || themes.blue;
+  };
+
+  const themeColors = getThemeColors(theme);
 
   // 더미 프롬프트 데이터 (테스트 모드용)
   const getDummyPrompt = (segmentId: string, status: string) => {
     const prompts = {
       'completed': [
-        '고품질 AI 컨퍼런스 영상을 생성해주세요. 전문적이고 깔끔한 스타일로 제작하며, 비즈니스 환경에 적합한 배경과 조명을 사용해주세요. 발표자는 자신감 있고 친근한 표정으로 카메라를 바라보며 말하고 있어야 합니다.',
-        '교육용 프레젠테이션 영상을 만들어주세요. 학습자가 집중할 수 있도록 깔끔하고 명확한 시각적 요소를 포함하며, 설명하는 내용과 관련된 적절한 그래픽이나 차트를 배경에 배치해주세요.',
-        '마케팅 전략 발표 영상을 제작해주세요. 현대적이고 역동적인 느낌의 배경과 함께, 데이터와 그래프를 효과적으로 보여줄 수 있는 구성으로 만들어주세요. 발표자는 열정적이고 설득력 있는 모습이어야 합니다.'
+        '고품질 AI 컨퍼런스 영상을 생성해주세요. 전문적이고 깔끔한 스타일로 제작하며, 비즈니스 환경에 적합한 배경과 조명을 사용해주세요. 발표자는 자신감 있고 친근한 표정으로 카메라를 바라보며 말하고 있어야 합니다. 슬라이드 내용과 연관된 시각적 요소들을 적절히 배치하여 전체적으로 조화로운 구성을 만들어주세요.',
+        '교육용 프레젠테이션 영상을 만들어주세요. 학습자가 집중할 수 있도록 깔끔하고 명확한 시각적 요소를 포함하며, 설명하는 내용과 관련된 적절한 그래픽이나 차트를 배경에 배치해주세요. 발표자는 친근하고 이해하기 쉽게 설명하는 모습으로 표현되어야 하며, 교육적 분위기를 강조하는 배경 설정을 사용해주세요.',
+        '마케팅 전략 발표 영상을 제작해주세요. 현대적이고 역동적인 느낌의 배경과 함께, 데이터와 그래프를 효과적으로 보여줄 수 있는 구성으로 만들어주세요. 발표자는 열정적이고 설득력 있는 모습이어야 하며, 비즈니스 성과와 성장을 시각적으로 표현할 수 있는 요소들을 포함해주세요.'
       ],
       'generating': [
-        '프로젝트 진행 현황 보고서 영상을 생성 중입니다. 팀워크와 협업을 강조하는 배경과 함께, 진행률과 성과를 시각적으로 표현할 수 있는 요소들을 포함하여 제작하고 있습니다.',
-        '기술 혁신 관련 프레젠테이션 영상을 만들고 있습니다. 미래지향적이고 혁신적인 느낌의 배경과 함께, 기술적 내용을 이해하기 쉽게 전달할 수 있는 시각적 구성으로 생성 중입니다.'
+        '프로젝트 진행 현황 보고서 영상을 생성 중입니다. 팀워크와 협업을 강조하는 배경과 함께, 진행률과 성과를 시각적으로 표현할 수 있는 요소들을 포함하여 제작하고 있습니다. 전문적이면서도 협력적인 분위기를 연출하는 영상으로 완성될 예정입니다.',
+        '기술 혁신 관련 프레젠테이션 영상을 만들고 있습니다. 미래지향적이고 혁신적인 느낌의 배경과 함께, 기술적 내용을 이해하기 쉽게 전달할 수 있는 시각적 구성으로 생성 중입니다. 첨단 기술의 발전과 혁신을 강조하는 영상으로 제작되고 있습니다.'
       ],
       'failed': [
-        '영상 생성 중 오류가 발생했습니다. 프롬프트 내용을 다시 확인하고 재시도해주세요.',
-        '서버 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        '영상 생성 중 오류가 발생했습니다. 프롬프트 내용을 다시 확인하고 재시도해주세요. 일반적으로 프롬프트가 너무 복잡하거나 지원하지 않는 요소가 포함된 경우 이런 오류가 발생할 수 있습니다.',
+        '서버 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요. 현재 서버 부하가 높거나 일시적인 네트워크 문제로 인해 처리가 중단되었을 가능성이 있습니다.'
       ],
       'pending': [
-        '아직 프롬프트가 생성되지 않았습니다. 잠시 후 자동으로 생성됩니다.',
-        '대기열에서 처리를 기다리고 있습니다.'
+        '아직 프롬프트가 생성되지 않았습니다. 잠시 후 자동으로 생성됩니다. 시스템이 세그먼트 내용을 분석하여 최적의 영상 생성 프롬프트를 만들어드릴 예정입니다.',
+        '대기열에서 처리를 기다리고 있습니다. 현재 다른 작업들이 진행 중이며, 순서대로 처리될 예정입니다. 예상 대기 시간은 약 2-3분입니다.'
       ]
     };
     
@@ -77,8 +112,22 @@ const SegmentList: React.FC<SegmentListProps> = ({
     if (!showStatus) return;
     
     const rect = event.currentTarget.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const tooltipWidth = 400; // 툴팁 예상 너비
+    
+    let x = rect.left + rect.width / 2;
+    
+    // 화면 오른쪽 끝을 벗어나는 경우 조정
+    if (x + tooltipWidth / 2 > viewportWidth - 20) {
+      x = viewportWidth - tooltipWidth / 2 - 20;
+    }
+    // 화면 왼쪽 끝을 벗어나는 경우 조정
+    if (x - tooltipWidth / 2 < 20) {
+      x = tooltipWidth / 2 + 20;
+    }
+    
     setTooltipPosition({
-      x: rect.left + rect.width / 2,
+      x: x,
       y: rect.top - 10
     });
     setHoveredSegment(segmentId);
@@ -157,7 +206,7 @@ const SegmentList: React.FC<SegmentListProps> = ({
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center py-8 ${className}`}>
-        <Loader2 className={`animate-spin ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={24} />
+        <Loader2 className={`animate-spin ${themeColors.loading}`} size={24} />
         <span className="ml-2">세그먼트 로드 중...</span>
       </div>
     );
@@ -195,9 +244,7 @@ const SegmentList: React.FC<SegmentListProps> = ({
             onSegmentSelect ? 'cursor-pointer' : ''
           } ${
             selectedSegment?.id === segment.id
-              ? darkMode 
-                ? 'border-blue-500 bg-blue-900/20' 
-                : 'border-blue-500 bg-blue-50'
+              ? themeColors.border
               : darkMode
                 ? 'border-gray-600 bg-gray-700/30 hover:bg-gray-700/50' 
                 : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
@@ -207,8 +254,8 @@ const SegmentList: React.FC<SegmentListProps> = ({
             <div className="flex items-center space-x-2">
               <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
                 selectedSegment?.id === segment.id
-                  ? darkMode ? 'bg-blue-500 text-white' : 'bg-blue-600 text-white'
-                  : darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600'
+                  ? themeColors.badgeSelected
+                  : themeColors.badge
               }`}>
                 {segment.segment_index}
               </div>
@@ -240,10 +287,10 @@ const SegmentList: React.FC<SegmentListProps> = ({
         </div>
       ))}
 
-      {/* 툴팁 */}
+      {/* 툴팁 - 크기 대폭 확대 */}
       {hoveredSegment && showStatus && (
         <div
-          className={`fixed z-50 max-w-sm p-3 rounded-lg shadow-lg border pointer-events-none transform -translate-x-1/2 -translate-y-full ${
+          className={`fixed z-50 w-96 max-w-lg p-4 rounded-lg shadow-xl border pointer-events-none transform -translate-x-1/2 -translate-y-full ${
             darkMode 
               ? 'bg-gray-900 border-gray-700 text-gray-200' 
               : 'bg-white border-gray-200 text-gray-800'
@@ -253,13 +300,15 @@ const SegmentList: React.FC<SegmentListProps> = ({
             top: tooltipPosition.y,
           }}
         >
-          <div className="text-xs font-medium mb-2">생성된 프롬프트:</div>
-          <div className="text-xs leading-relaxed">
+          <div className="text-sm font-semibold mb-3 pb-2 border-b border-gray-300 dark:border-gray-600">
+            생성된 프롬프트
+          </div>
+          <div className="text-sm leading-relaxed max-h-40 overflow-y-auto">
             {getPromptContent(hoveredSegment)}
           </div>
           {!serverConnected && (
-            <div className={`text-xs mt-2 italic ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-              (테스트 데이터)
+            <div className={`text-xs mt-3 pt-2 border-t border-gray-300 dark:border-gray-600 italic ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+              ※ 테스트 모드 - 더미 데이터
             </div>
           )}
           

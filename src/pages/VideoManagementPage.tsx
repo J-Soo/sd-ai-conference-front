@@ -608,6 +608,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                     isLoading={loadingSegments}
                     emptyMessage="세그먼트가 없습니다"
                     serverConnected={serverConnected}
+                    theme="purple"
                   />
                 </div>
               </div>

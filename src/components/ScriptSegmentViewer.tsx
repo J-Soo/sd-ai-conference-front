@@ -436,6 +436,7 @@ const ScriptSegmentViewer: React.FC<ScriptSegmentViewerProps> = ({
               error={error}
               emptyMessage="이 대본에는 세그먼트가 없습니다"
               serverConnected={serverConnected}
+              theme="blue"
             />
           </div>
         )}
