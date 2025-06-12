@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ScriptSegment, SegmentVideoConfig } from '../types';
 import { FileIcon, CheckCircle, Loader2, AlertCircle, Clock } from 'lucide-react';
 
@@ -33,6 +34,21 @@ const SegmentList: React.FC<SegmentListProps> = ({
 }) => {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [tooltipElement, setTooltipElement] = useState<HTMLElement | null>(null);
+
+  // 툴팁 컨테이너 생성
+  useEffect(() => {
+    const element = document.createElement('div');
+    element.id = 'segment-tooltip-portal';
+    document.body.appendChild(element);
+    setTooltipElement(element);
+
+    return () => {
+      if (document.body.contains(element)) {
+        document.body.removeChild(element);
+      }
+    };
+  }, []);
 
   // 테마별 색상 정의
   const getThemeColors = (theme: string) => {
@@ -107,31 +123,32 @@ const SegmentList: React.FC<SegmentListProps> = ({
     }
   };
 
-  // 마우스 이벤트 핸들러 - 위치 계산 개선
+  // 마우스 이벤트 핸들러 - 절대 위치 계산
   const handleMouseEnter = (segmentId: string, event: React.MouseEvent) => {
     if (!showStatus) return;
     
     const rect = event.currentTarget.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const tooltipWidth = 500; // 툴팁 너비 증가
-    const tooltipHeight = 200; // 예상 툴팁 높이
+    const tooltipWidth = 500;
+    const tooltipHeight = 200;
     
-    let x = rect.left + rect.width / 2;
-    let y = rect.top - 15; // 뱃지 위쪽에 표시
+    // 절대 위치 계산 (스크롤 고려)
+    let x = rect.left + rect.width / 2 + window.scrollX;
+    let y = rect.top - 15 + window.scrollY;
     
     // 화면 오른쪽 끝을 벗어나는 경우 조정
-    if (x + tooltipWidth / 2 > viewportWidth - 20) {
-      x = viewportWidth - tooltipWidth / 2 - 20;
+    if (rect.left + tooltipWidth / 2 > viewportWidth - 20) {
+      x = viewportWidth - tooltipWidth / 2 - 20 + window.scrollX;
     }
     // 화면 왼쪽 끝을 벗어나는 경우 조정
-    if (x - tooltipWidth / 2 < 20) {
-      x = tooltipWidth / 2 + 20;
+    if (rect.left - tooltipWidth / 2 < 20) {
+      x = tooltipWidth / 2 + 20 + window.scrollX;
     }
     
     // 화면 위쪽을 벗어나는 경우 뱃지 아래쪽에 표시
-    if (y - tooltipHeight < 20) {
-      y = rect.bottom + 15;
+    if (rect.top - tooltipHeight < 20) {
+      y = rect.bottom + 15 + window.scrollY;
     }
     
     setTooltipPosition({ x, y });
@@ -208,6 +225,51 @@ const SegmentList: React.FC<SegmentListProps> = ({
     return null;
   };
 
+  // 툴팁 컴포넌트
+  const renderTooltip = () => {
+    if (!hoveredSegment || !showStatus || !tooltipElement) return null;
+
+    const isAbove = tooltipPosition.y > window.innerHeight / 2 + window.scrollY;
+
+    return createPortal(
+      <div
+        className={`fixed z-[9999] w-[500px] max-w-[90vw] p-5 rounded-lg shadow-2xl border pointer-events-none transform -translate-x-1/2 ${
+          isAbove ? '-translate-y-full' : 'translate-y-2'
+        } ${
+          darkMode 
+            ? 'bg-gray-900 border-gray-700 text-gray-200' 
+            : 'bg-white border-gray-200 text-gray-800'
+        }`}
+        style={{
+          left: tooltipPosition.x,
+          top: tooltipPosition.y,
+        }}
+      >
+        <div className="text-sm font-semibold mb-3 pb-2 border-b border-gray-300 dark:border-gray-600">
+          생성된 프롬프트
+        </div>
+        <div className="text-sm leading-relaxed max-h-48 overflow-y-auto pr-2">
+          {getPromptContent(hoveredSegment)}
+        </div>
+        {!serverConnected && (
+          <div className={`text-xs mt-3 pt-2 border-t border-gray-300 dark:border-gray-600 italic ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+            ※ 테스트 모드 - 더미 데이터
+          </div>
+        )}
+        
+        {/* 툴팁 화살표 - 위치에 따라 조정 */}
+        <div 
+          className={`absolute left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-transparent ${
+            isAbove
+              ? `top-full border-t-4 ${darkMode ? 'border-t-gray-900' : 'border-t-white'}`
+              : `bottom-full border-b-4 ${darkMode ? 'border-b-gray-900' : 'border-b-white'}`
+          }`}
+        />
+      </div>,
+      tooltipElement
+    );
+  };
+
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center py-8 ${className}`}>
@@ -240,98 +302,63 @@ const SegmentList: React.FC<SegmentListProps> = ({
   }
 
   return (
-    <div className={`space-y-4 relative ${className}`}>
-      {segments.map((segment) => (
-        <div
-          key={segment.id}
-          onClick={() => onSegmentSelect?.(segment)}
-          className={`p-4 rounded-lg border transition-colors duration-200 ${
-            onSegmentSelect ? 'cursor-pointer' : ''
-          } ${
-            selectedSegment?.id === segment.id
-              ? themeColors.border
-              : darkMode
-                ? 'border-gray-600 bg-gray-700/30 hover:bg-gray-700/50' 
-                : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-          }`}
-        >
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-                selectedSegment?.id === segment.id
-                  ? themeColors.badgeSelected
-                  : themeColors.badge
-              }`}>
-                {segment.segment_index}
+    <>
+      <div className={`space-y-4 ${className}`}>
+        {segments.map((segment) => (
+          <div
+            key={segment.id}
+            onClick={() => onSegmentSelect?.(segment)}
+            className={`p-4 rounded-lg border transition-colors duration-200 ${
+              onSegmentSelect ? 'cursor-pointer' : ''
+            } ${
+              selectedSegment?.id === segment.id
+                ? themeColors.border
+                : darkMode
+                  ? 'border-gray-600 bg-gray-700/30 hover:bg-gray-700/50' 
+                  : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+            }`}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
+                  selectedSegment?.id === segment.id
+                    ? themeColors.badgeSelected
+                    : themeColors.badge
+                }`}>
+                  {segment.segment_index}
+                </div>
+                <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  세그먼트 {segment.segment_index}
+                </span>
               </div>
-              <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                세그먼트 {segment.segment_index}
-              </span>
+              
+              <div className="flex items-center space-x-2">
+                {segment.slide_reference && (
+                  <div className="flex items-center space-x-1 text-xs">
+                    <FileIcon size={12} />
+                    <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                      {segment.slide_reference}
+                    </span>
+                  </div>
+                )}
+                {renderStatusBadge(segment.id)}
+              </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              {segment.slide_reference && (
-                <div className="flex items-center space-x-1 text-xs">
-                  <FileIcon size={12} />
-                  <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                    {segment.slide_reference}
-                  </span>
-                </div>
-              )}
-              {renderStatusBadge(segment.id)}
+            <div className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              {segment.content.split('\n').map((line, lineIndex) => (
+                <p key={lineIndex} className="mb-1">
+                  {line || '\u00A0'}
+                </p>
+              ))}
             </div>
           </div>
-          
-          <div className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            {segment.content.split('\n').map((line, lineIndex) => (
-              <p key={lineIndex} className="mb-1">
-                {line || '\u00A0'}
-              </p>
-            ))}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
-      {/* 툴팁 - 크기 대폭 확대 및 위치 개선 */}
-      {hoveredSegment && showStatus && (
-        <div
-          className={`fixed z-[9999] w-[500px] max-w-[90vw] p-5 rounded-lg shadow-2xl border pointer-events-none transform -translate-x-1/2 ${
-            tooltipPosition.y > window.innerHeight / 2 
-              ? '-translate-y-full' 
-              : 'translate-y-2'
-          } ${
-            darkMode 
-              ? 'bg-gray-900 border-gray-700 text-gray-200' 
-              : 'bg-white border-gray-200 text-gray-800'
-          }`}
-          style={{
-            left: tooltipPosition.x,
-            top: tooltipPosition.y,
-          }}
-        >
-          <div className="text-sm font-semibold mb-3 pb-2 border-b border-gray-300 dark:border-gray-600">
-            생성된 프롬프트
-          </div>
-          <div className="text-sm leading-relaxed max-h-48 overflow-y-auto pr-2">
-            {getPromptContent(hoveredSegment)}
-          </div>
-          {!serverConnected && (
-            <div className={`text-xs mt-3 pt-2 border-t border-gray-300 dark:border-gray-600 italic ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-              ※ 테스트 모드 - 더미 데이터
-            </div>
-          )}
-          
-          {/* 툴팁 화살표 - 위치에 따라 조정 */}
-          <div 
-            className={`absolute left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-transparent ${
-              tooltipPosition.y > window.innerHeight / 2
-                ? `top-full border-t-4 ${darkMode ? 'border-t-gray-900' : 'border-t-white'}`
-                : `bottom-full border-b-4 ${darkMode ? 'border-b-gray-900' : 'border-b-white'}`
-            }`}
-          />
-        </div>
-      )}
-    </div>
+      {/* 포털을 통해 렌더링되는 툴팁 */}
+      {renderTooltip()}
+    </>
   );
 };
 
