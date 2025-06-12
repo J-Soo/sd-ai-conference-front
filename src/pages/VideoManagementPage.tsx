@@ -500,7 +500,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
 
       {!showVideoResults ? (
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* 왼쪽: 대본 목록 / 세그먼트 목록 */}
+          {/* 왼쪽 열 */}
           <div className="h-[600px]">
             <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md relative`}>
               {/* 대본 목록 */}
@@ -607,6 +607,7 @@ const VideoManagementPage: React.FC<VideoManagementPageProps> = ({
                     showStatus={false}
                     isLoading={loadingSegments}
                     emptyMessage="세그먼트가 없습니다"
+                    serverConnected={serverConnected}
                   />
                 </div>
               </div>
