@@ -412,106 +412,111 @@ ${randomResponse}
           )}
         </div>
             
-        {/* 발표 시간 영역 */}
+        {/* 발표 설정 영역 - 좌우 배치 */}
         <div>
-        <h3 className="text-lg font-medium mb-3">발표 시간</h3>
-            <div className="flex space-x-4">
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <Timer className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={18} />
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={durationMinutes}
-                    onChange={handleDurationChange}
-                    className={`w-20 p-2 rounded-md border text-center font-medium ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-gray-200' 
-                        : 'bg-white border-gray-300 text-gray-800'
-                    }`}
-                  />
-                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    분
-                  </span>
+          <h3 className="text-lg font-medium mb-3">발표 설정</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* 왼쪽: 발표 시간 */}
+            <div className={`p-4 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700/30' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="flex items-center space-x-2 mb-3">
+                <Timer className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={18} />
+                <h4 className="font-medium">발표 시간</h4>
+              </div>
+              <div className="flex space-x-3">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={durationMinutes}
+                      onChange={handleDurationChange}
+                      className={`w-full p-2 rounded-md border text-center font-medium ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                          : 'bg-white border-gray-300 text-gray-800'
+                      }`}
+                    />
+                    <span className={`text-sm font-medium whitespace-nowrap ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      분
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      step="10"
+                      value={durationSeconds}
+                      onChange={handleDurationSecondsChange}
+                      onBlur={handleDurationSecondsBlur}
+                      className={`w-full p-2 rounded-md border text-center font-medium ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                          : 'bg-white border-gray-300 text-gray-800'
+                      }`}
+                    />
+                    <span className={`text-sm font-medium whitespace-nowrap ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      초
+                    </span>
+                  </div>
                 </div>
               </div>
-              
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <Timer className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={18} />
-                  <input
-                    type="number"
-                    min="0"
-                    max="59"
-                    step="10"
-                    value={durationSeconds}
-                    onChange={handleDurationSecondsChange}
-                    onBlur={handleDurationSecondsBlur}
-                    className={`w-20 p-2 rounded-md border text-center font-medium ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-gray-200' 
-                        : 'bg-white border-gray-300 text-gray-800'
-                    }`}
-                  />
-                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    초
-                  </span>
-                </div>
-              </div>
+              <p className={`mt-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                초는 10초 단위로 자동 조정됩니다
+              </p>
             </div>
-          <p className={`mt-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            초는 10초 단위로 자동 조정됩니다
-          </p>
-        </div>
 
-        {/* 생성 옵션 영역 */}
-        <div className="flex-1 min-h-0">
-          <h3 className="text-lg font-medium mb-3">생성 옵션</h3>
-          <div className="space-y-4 h-full flex flex-col">
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  대본 스타일
-                </label>
-                <select
-                  value={style}
-                  onChange={handleStyleChange}
-                  className={`w-full p-2 rounded-md border ${
-                    darkMode 
-                      ? 'bg-gray-700 border-gray-600 text-gray-200' 
-                      : 'bg-white border-gray-300 text-gray-800'
-                  }`}
-                >
-                  <option value="professional">전문적</option>
-                  <option value="casual">캐주얼</option>
-                  <option value="custom">직접 작성</option>
-                </select>
+            {/* 오른쪽: 대본 스타일 */}
+            <div className={`p-4 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700/30' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="flex items-center space-x-2 mb-3">
+                <TestTube className={`${darkMode ? 'text-purple-400' : 'text-purple-600'}`} size={18} />
+                <h4 className="font-medium">대본 스타일</h4>
               </div>
-              
-              <div className="flex-1 flex flex-col min-h-0">
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  생성 프롬프트
-                </label>
-                <textarea
-                  value={style === 'custom' ? customPrompt : defaultPrompts[style as keyof typeof defaultPrompts]}
-                  onChange={handleCustomPromptChange}
-                  disabled={style !== 'custom'}
-                  rows={6}
-                  className={`w-full p-3 rounded-md border resize-none flex-1 min-h-[180px] ${
-                    style === 'custom'
-                      ? darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-gray-200' 
-                        : 'bg-white border-gray-300 text-gray-800'
-                      : darkMode 
-                        ? 'bg-gray-800 border-gray-700 text-gray-400 cursor-not-allowed' 
-                        : 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-                  placeholder="직접 작성을 선택하면 프롬프트를 수정할 수 있습니다..."
-                  />
-                </div>
-              </div>
+              <select
+                value={style}
+                onChange={handleStyleChange}
+                className={`w-full p-2 rounded-md border ${
+                  darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                    : 'bg-white border-gray-300 text-gray-800'
+                }`}
+              >
+                <option value="professional">전문적</option>
+                <option value="casual">캐주얼</option>
+                <option value="custom">직접 작성</option>
+              </select>
+            </div>
           </div>
         </div>
+
+        {/* 생성 프롬프트 영역 */}
+        <div className="flex-1 min-h-0">
+          <h3 className="text-lg font-medium mb-3">생성 프롬프트</h3>
+          <div className="h-full flex flex-col min-h-0">
+            <textarea
+              value={style === 'custom' ? customPrompt : defaultPrompts[style as keyof typeof defaultPrompts]}
+              onChange={handleCustomPromptChange}
+              disabled={style !== 'custom'}
+              rows={6}
+              className={`w-full p-3 rounded-md border resize-none flex-1 min-h-[180px] ${
+                style === 'custom'
+                  ? darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                    : 'bg-white border-gray-300 text-gray-800'
+                  : darkMode 
+                    ? 'bg-gray-800 border-gray-700 text-gray-400 cursor-not-allowed' 
+                    : 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+              placeholder="직접 작성을 선택하면 프롬프트를 수정할 수 있습니다..."
+            />
+          </div>
+        </div>
+      </div>
             
       {/* 하단 고정 버튼 영역 */}
       <div className="mt-6">
@@ -528,10 +533,7 @@ ${randomResponse}
           >
             {isLoading ? (
               <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <Loader2 className="animate-spin" size={18} />
                 <span>{serverConnected ? '처리 중...' : '테스트 처리 중...'}</span>
               </>
             ) : (
