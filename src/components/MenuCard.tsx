@@ -52,9 +52,23 @@ const MenuCard: React.FC<MenuCardProps> = ({
         icon: darkMode ? 'text-orange-400' : 'text-orange-600',
         title: darkMode ? 'text-orange-300' : 'text-orange-700',
         arrow: darkMode ? 'text-orange-400 group-hover:text-orange-300' : 'text-orange-500 group-hover:text-orange-600'
+      },
+      indigo: {
+        bg: darkMode ? 'bg-indigo-900/20 hover:bg-indigo-900/30' : 'bg-indigo-50 hover:bg-indigo-100',
+        border: darkMode ? 'border-indigo-700 hover:border-indigo-600' : 'border-indigo-200 hover:border-indigo-300',
+        icon: darkMode ? 'text-indigo-400' : 'text-indigo-600',
+        title: darkMode ? 'text-indigo-300' : 'text-indigo-700',
+        arrow: darkMode ? 'text-indigo-400 group-hover:text-indigo-300' : 'text-indigo-500 group-hover:text-indigo-600'
+      },
+      rose: {
+        bg: darkMode ? 'bg-rose-900/20 hover:bg-rose-900/30' : 'bg-rose-50 hover:bg-rose-100',
+        border: darkMode ? 'border-rose-700 hover:border-rose-600' : 'border-rose-200 hover:border-rose-300',
+        icon: darkMode ? 'text-rose-400' : 'text-rose-600',
+        title: darkMode ? 'text-rose-300' : 'text-rose-700',
+        arrow: darkMode ? 'text-rose-400 group-hover:text-rose-300' : 'text-rose-500 group-hover:text-rose-600'
       }
     };
-    return colors[color as keyof typeof colors];
+    return colors[color as keyof typeof colors] || colors.blue;
   };
 
   const colors = getColorClasses(color, darkMode);

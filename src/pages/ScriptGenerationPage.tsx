@@ -1,12 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Loader2, Calendar, Clock, Trash2, CheckSquare, Square, X, AlertCircle, Volume2, TestTube, FileSearch } from 'lucide-react';
+import { FileText, Loader2, Calendar, Clock, Trash2, CheckSquare, Square, X, AlertCircle, Volume2, TestTube, FileSearch } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import FileManager from '../components/FileManager';
 import ScriptSegmentViewer from '../components/ScriptSegmentViewer';
 import { Script } from '../types';
 import { formatDate } from '../utils';
 import axios from 'axios';
+
+// 스타일명 한글 변환 함수
+const getStyleDisplayName = (style?: string): string => {
+  switch (style) {
+    case 'professional':
+      return '전문적';
+    case 'casual':
+      return '캐주얼';
+    case 'custom':
+      return '직접작성';
+    default:
+      return '기본';
+  }
+};
+
+// 방금 생성된 스크립트인지 확인 (5분 이내) - New 라벨용
+const isVeryRecentScript = (createdAt: string): boolean => {
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  return new Date(createdAt) > fiveMinutesAgo;
+};
+
+// 페이지 로드 후 생성된 스크립트인지 확인 - 배경색 변경용
+const isGeneratedAfterPageLoad = (createdAt: string, pageLoadTime: Date): boolean => {
+  return new Date(createdAt) > pageLoadTime;
+};
 
 interface ScriptGenerationPageProps {
   darkMode: boolean;
@@ -21,12 +45,13 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
   setServerConnected,
   onNavigateToVoiceGeneration
 }) => {
-  const navigate = useNavigate();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [loadingScripts, setLoadingScripts] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generationResult, setGenerationResult] = useState<string | null>(null);
+  const [pageLoadTime] = useState<Date>(new Date()); // 페이지 로드 시간
+  const [newGeneratedScriptIds, setNewGeneratedScriptIds] = useState<Set<string>>(new Set()); // 이번 세션에서 생성한 스크립트 ID들
   
   // 삭제 관련 상태
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
@@ -37,41 +62,32 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
   const [deletingScriptId, setDeletingScriptId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // 더미 스크립트 데이터 (백엔드 연결이 안될 때 사용)
-  const dummyScripts: Script[] = [
-    {
-      id: '1',
-      title: '마케팅 전략 발표',
-      content: '안녕하세요! 오늘 발표할 주제에 대해 말씀드리겠습니다.\n\n첫 번째로, 우리가 다룰 핵심 내용은 다음과 같습니다:\n- 현재 시장 상황 분석\n- 새로운 기술 동향\n- 향후 전망과 기회\n\n감사합니다.',
-      file_name: 'marketing_strategy.pptx',
-      duration_minutes: 5,
-      created_at: '2024-01-15T10:30:00Z',
-      updated_at: '2024-01-15T10:30:00Z'
-    },
-    {
-      id: '2',
-      title: '프로젝트 진행 현황',
-      content: '여러분, 반갑습니다!\n\n오늘 준비한 발표 내용은 크게 세 부분으로 구성되어 있습니다.\n\n**1부: 문제 정의**\n현재 우리가 직면한 주요 과제들을 살펴보겠습니다.\n\n질문이 있으시면 언제든 말씀해 주세요. 감사합니다!',
-      file_name: 'project_status.pdf',
-      duration_minutes: 3,
-      created_at: '2024-01-14T14:20:00Z',
-      updated_at: '2024-01-14T20:00Z'
-    },
-    {
-      id: '3',
-      title: '혁신과 성장 전략',
-      content: '프레젠테이션을 시작하겠습니다.\n\n**개요**\n오늘 발표는 혁신과 성장에 관한 이야기입니다.\n\n**결론**\n우리는 지속적인 혁신을 통해 더 큰 성공을 이룰 것입니다.\n\n여러분의 관심과 지원에 감사드립니다.',
-      file_name: 'innovation_strategy.pptx',
-      duration_minutes: 7,
-      created_at: '2024-01-13T09:15:00Z',
-      updated_at: '2024-01-13T09:15:00Z'
+
+  // 서버 연결 상태 확인
+  useEffect(() => {
+    const checkServerConnection = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/');
+        if (response.status === 200) {
+          setServerConnected(true);
+        }
+      } catch (error) {
+        console.log('서버 연결 확인 실패:', error);
+        setServerConnected(false);
+      }
+    };
+
+    if (!serverConnected) {
+      checkServerConnection();
     }
-  ];
+  }, [serverConnected, setServerConnected]);
 
   // 스크립트 목록 로드
   useEffect(() => {
-    loadScripts();
-  }, []);
+    if (serverConnected) {
+      loadScripts();
+    }
+  }, [serverConnected]);
 
   const loadScripts = async () => {
     setLoadingScripts(true);
@@ -80,10 +96,10 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
     try {
       if (serverConnected) {
         try {
-          const response = await axios.get('http://localhost:8000/api/v1/scripts/all');
+          const response = await axios.get('http://localhost:8000/api/v1/scripts/recent');
           console.log('API 응답:', response.data);
           if (response.data && Array.isArray(response.data)) {
-            setScripts(response.data);
+            setScripts(response.data.sort((a: Script, b: Script) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
           } else {
             console.error('API 응답 형식 오류:', response.data);
             setError('API에서 유효한 응답을 받지 못했습니다.');
@@ -91,20 +107,12 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           }
         } catch (apiError: any) {
           console.error('API 호출 오류:', apiError);
-          
-          if (apiError.response && apiError.response.status === 404) {
-            setError('대본 목록을 찾을 수 없습니다. 서버가 업데이트되었거나 해당 경로가 변경되었습니다.');
-            // API가 구현되지 않은 경우에만 임시로 더미 데이터 사용
-            setScripts(dummyScripts);
-          } else {
-            setError(`서버 오류: ${apiError.response?.data?.detail || apiError.message || '알 수 없는 오류'}`);
-            setScripts([]);
-          }
+          setError(`서버 오류: ${apiError.response?.data?.detail || apiError.message || '알 수 없는 오류'}`);
+          setScripts([]);
         }
       } else {
-        // 테스트 모드: 더미 데이터 사용
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setScripts(dummyScripts);
+        setError('서버에 연결되지 않았습니다.');
+        setScripts([]);
       }
     } catch (err: any) {
       console.error('스크립트 로드 오류:', err);
@@ -154,12 +162,7 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           }
         }
       } else {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setScripts(prev => prev.filter(script => script.id !== scriptToDelete.id));
-        
-        if (selectedScript?.id === scriptToDelete.id) {
-          setSelectedScript(null);
-        }
+        setError('서버에 연결되지 않았습니다. 삭제할 수 없습니다.');
       }
     } catch (err: any) {
       console.error('대본 삭제 오류:', err);
@@ -208,12 +211,8 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
           }
         }
       } else {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setScripts(prev => prev.filter(script => !selectedScriptIds.has(script.id)));
-        
-        if (selectedScript && selectedScriptIds.has(selectedScript.id)) {
-          setSelectedScript(null);
-        }
+        setError('서버에 연결되지 않았습니다. 삭제할 수 없습니다.');
+        return;
       }
       
       setIsMultiSelectMode(false);
@@ -255,31 +254,49 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
   };
 
   // 생성 결과 처리
-  const handleGenerationResult = (result: string) => {
+  const handleGenerationResult = async (result: string) => {
     setGenerationResult(result);
+    
+    // 새로 생성된 스크립트를 가져오기 위해 목록 새로고침
+    if (serverConnected) {
+      try {
+        const response = await axios.get('http://localhost:8000/api/v1/scripts/recent');
+        if (response.data && Array.isArray(response.data)) {
+          const newScripts = response.data.sort((a: Script, b: Script) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          
+          // 현재 페이지 로드 후 생성된 스크립트 찾기
+          const newlyGenerated = newScripts.filter(script => 
+            !scripts.some(existingScript => existingScript.id === script.id) &&
+            isGeneratedAfterPageLoad(script.created_at, pageLoadTime)
+          );
+          
+          // 새로 생성된 스크립트 ID들을 기록
+          if (newlyGenerated.length > 0) {
+            setNewGeneratedScriptIds(prev => {
+              const updated = new Set(prev);
+              newlyGenerated.forEach(script => updated.add(script.id));
+              return updated;
+            });
+          }
+          
+          setScripts(newScripts);
+          
+          // 새로 생성된 스크립트가 있으면 첫 번째 것을 자동 선택
+          if (newlyGenerated.length > 0) {
+            setSelectedScript(newlyGenerated[0]);
+          } else if (newScripts.length > 0) {
+            // 새로 생성된 것이 없으면 가장 최근 스크립트 선택
+            setSelectedScript(newScripts[0]);
+          }
+        }
+      } catch (error) {
+        console.error('스크립트 목록 새로고침 오류:', error);
+      }
+    }
   };
 
   return (
     <div className="space-y-10">
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={() => navigate('/')}
-          className={`p-2 rounded-full transition-colors duration-200 ${
-            darkMode 
-              ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white' 
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800'
-          }`}
-          aria-label="홈으로 돌아가기"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h2 className="text-xl font-semibold">대본 관리</h2>
-          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            PPT나 PDF 파일을 업로드하여 AI 발표 대본을 생성하고 관리하세요
-          </p>
-        </div>
-      </div>
 
       {error && (
         <div className={`p-4 rounded-lg border ${darkMode ? 'bg-red-900/20 border-red-700 text-red-400' : 'bg-red-50 border-red-200 text-red-700'}`}>
@@ -290,14 +307,21 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
         </div>
       )}
 
-      {/* 메인 컨테이너 - fit-content */}
-      <div className="w-full">
+      {/* 메인 컨테이너 - 비율 기반 */}
+      <div className="w-full h-[calc(100vh-8rem)]">
         <PanelGroup direction="horizontal">
-          {/* 왼쪽 열 */}
-          <Panel defaultSize={50} minSize={30} className="pr-2">
-            <div className="space-y-4">
-              {/* 파일 업로드 영역 - 내부 요소에 맞춘 높이 */}
-              <div className="h-[700px]">
+          {/* 왼쪽 열 - 대본 생성준비 */}
+          <Panel defaultSize={40} minSize={30} className="pr-2">
+            <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md flex flex-col`}>
+              <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <h2 className="text-xl font-semibold">대본 생성준비</h2>
+                {!serverConnected && (
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+                    서버에 연결되지 않았습니다
+                  </p>
+                )}
+              </div>
+              <div className="px-6 py-6 pr-4 flex-1 overflow-y-auto overflow-x-hidden">
                 <FileManager 
                   darkMode={darkMode} 
                   serverConnected={serverConnected}
@@ -306,55 +330,6 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                   onScriptGenerated={loadScripts}
                   onGenerationResult={handleGenerationResult}
                 />
-              </div>
-              
-              {/* 생성 결과 영역 - 고정 높이 600px */}
-              <div className="h-[600px]">
-                <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
-                  <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">생성 결과</h3>
-                      {!serverConnected && generationResult && (
-                        <div className="flex items-center space-x-2">
-                          <TestTube className={`${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} size={16} />
-                          <span className={`text-xs ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                            더미 데이터
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="p-6 h-[calc(100%-5rem)] overflow-y-auto">
-                    {generationResult ? (
-                      <div className="space-y-4">
-                        <div className={`p-6 rounded-md overflow-auto ${
-                          darkMode ? 'bg-gray-900 text-gray-200' : 'bg-gray-50 text-gray-800'
-                        }`}>
-                          <div className={`whitespace-pre-wrap ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {generationResult}
-                          </div>
-                        </div>
-                        
-                        <button
-                          onClick={onNavigateToVoiceGeneration}
-                          className={`w-full px-5 py-3 rounded-md flex justify-center items-center space-x-2 font-medium
-                            ${darkMode ? 'bg-green-600 hover:bg-green-500' : 'bg-green-600 hover:bg-green-700'} text-white
-                            transition-colors duration-200`}
-                        >
-                          <Volume2 size={18} />
-                          <span>음성 생성하기</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-8 h-full">
-                        <FileSearch className={`mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={32} />
-                        <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                          파일을 업로드하고 대본을 생성하면 결과가 여기에 표시됩니다
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
             </div>
           </Panel>
@@ -367,24 +342,29 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
             } transition-colors duration-200`} />
           </PanelResizeHandle>
 
-          {/* 오른쪽 열 */}
-          <Panel defaultSize={50} minSize={30} className="pl-2">
-            <div className="space-y-4">
-              {/* 대본 목록 영역 - 고정 높이 500px */}
-              <div className="h-[500px]">
-                <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
-                  <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold">저장된 대본 목록</h3>
-                        {!serverConnected && (
-                          <p className={`text-xs mt-1 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                            테스트 모드 - 더미 데이터 표시 중
-                          </p>
-                        )}
-                      </div>
-                      
-                      {scripts.length > 0 && (
+          {/* 오른쪽 열 - 대본 생성결과 */}
+          <Panel defaultSize={60} minSize={30} className="pl-2">
+            <div className={`h-full rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md flex flex-col`}>
+              <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <h2 className="text-xl font-semibold">대본 생성결과</h2>
+              </div>
+              <div className="p-6 flex-1 flex flex-col gap-6">
+                {/* 대본 목록 영역 */}
+                <div className="h-[45%] min-h-[250px]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-lg font-medium">최근 생성된 대본 목록</h3>
+                      <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        1시간 이내 결과만 조회됩니다
+                      </p>
+                      {!serverConnected && (
+                        <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+                          서버에 연결되지 않았습니다
+                        </p>
+                      )}
+                    </div>
+                        
+                        {scripts.length > 0 && (
                         <div className="flex items-center space-x-2">
                           {isMultiSelectMode && (
                             <>
@@ -452,8 +432,8 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                         </div>
                       )}
                     </div>
-                  </div>
-                  <div className="p-6 h-[calc(100%-5rem)] overflow-y-auto">
+                  <div className={`h-[calc(100%-4rem)] rounded-lg border overflow-hidden ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+                    <div className="p-2 h-full overflow-y-auto">
                     {loadingScripts ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className={`animate-spin ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={24} />
@@ -479,9 +459,13 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                 ? darkMode 
                                   ? 'border-blue-500 bg-blue-900/20' 
                                   : 'border-blue-500 bg-blue-50'
-                                : darkMode
-                                  ? 'border-gray-600 hover:border-gray-500 bg-gray-700/50 hover:bg-gray-700'
-                                  : 'border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100'
+                                : newGeneratedScriptIds.has(script.id) || isGeneratedAfterPageLoad(script.created_at, pageLoadTime)
+                                  ? darkMode
+                                    ? 'border-green-600 hover:border-green-500 bg-green-900/20 hover:bg-green-900/30'
+                                    : 'border-green-300 hover:border-green-400 bg-green-50 hover:bg-green-100'
+                                  : darkMode
+                                    ? 'border-gray-600 hover:border-gray-500 bg-gray-700/50 hover:bg-gray-700'
+                                    : 'border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100'
                             }`}
                           >
                             <div className="flex items-start justify-between">
@@ -506,12 +490,23 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                                   )}
                                   
                                   <div className="flex-1">
-                                    <h4 className="font-medium mb-2">{script.title}</h4>
+                                    <div className="flex items-center space-x-2 mb-2">
+                                      <h4 className="font-medium">{script.title}</h4>
+                                      {isVeryRecentScript(script.created_at) && (
+                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                          darkMode 
+                                            ? 'bg-green-800 text-green-200' 
+                                            : 'bg-green-600 text-white'
+                                        }`}>
+                                          New
+                                        </span>
+                                      )}
+                                    </div>
                                     <div className="flex items-center space-x-4 text-xs">
                                       <div className="flex items-center space-x-1">
-                                        <FileText size={12} />
+                                        <TestTube size={12} />
                                         <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                          {script.file_name}
+                                          {getStyleDisplayName(script.style)}
                                         </span>
                                       </div>
                                       <div className="flex items-center space-x-1">
@@ -560,17 +555,39 @@ const ScriptGenerationPage: React.FC<ScriptGenerationPageProps> = ({
                         ))}
                       </div>
                     )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* 대본 세그먼트 영역 - 고정 높이 720px */}
-              <div className="h-[800px]">
-                <ScriptSegmentViewer 
-                  selectedScript={selectedScript}
-                  darkMode={darkMode}
-                  serverConnected={serverConnected}
-                />
+                {/* 대본 전체 내용 영역 */}
+                <div className="flex-1 min-h-[200px] mt-5">
+                  <h3 className="text-lg font-medium mb-3">대본 전체 내용</h3>
+                  {selectedScript && (
+                    <p className={`text-sm mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {selectedScript.title}
+                    </p>
+                  )}
+                  <div className={`h-[calc(100%-4rem)] rounded-lg border overflow-hidden ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+                    <div className="p-4 h-full overflow-y-auto">
+                    {selectedScript ? (
+                      <div className={`p-6 rounded-md ${
+                        darkMode ? 'bg-gray-900 text-gray-200' : 'bg-gray-50 text-gray-800'
+                      }`}>
+                        <div className={`whitespace-pre-wrap ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          {selectedScript.content}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 h-full">
+                        <FileText className={`mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={32} />
+                        <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                          대본을 선택하면 전체 내용이 여기에 표시됩니다
+                        </p>
+                      </div>
+                    )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </Panel>

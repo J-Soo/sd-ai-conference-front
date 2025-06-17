@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Trash2, Save, Loader2, AlertCircle, Plus, Image as ImageIcon, CheckSquare, Square, X } from 'lucide-react';
+import { User, Trash2, Save, Loader2, AlertCircle, Plus, Image as ImageIcon, CheckSquare, Square, X } from 'lucide-react';
 import { Avatar } from '../types';
 import { formatDate, getImageUrl } from '../utils';
 import ImageUploader from '../components/ImageUploader';
@@ -15,7 +14,6 @@ const AvatarManagementPage: React.FC<AvatarManagementPageProps> = ({
   darkMode,
   serverConnected
 }) => {
-  const navigate = useNavigate();
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [selectedAvatar, setSelectedAvatar] = useState<Avatar | null>(null);
   const [loadingAvatars, setLoadingAvatars] = useState(true);
@@ -387,25 +385,6 @@ const AvatarManagementPage: React.FC<AvatarManagementPageProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={() => navigate('/')}
-          className={`p-2 rounded-full transition-colors duration-200 ${
-            darkMode 
-              ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white' 
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800'
-          }`}
-          aria-label="홈으로 돌아가기"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h2 className="text-xl font-semibold">아바타 관리</h2>
-          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            영상 생성에 사용할 아바타를 등록하고 관리하세요
-          </p>
-        </div>
-      </div>
 
       {error && (
         <div className={`p-4 rounded-lg border ${darkMode ? 'bg-red-900/20 border-red-700 text-red-400' : 'bg-red-50 border-red-200 text-red-700'}`}>

@@ -13,6 +13,7 @@ export interface Script {
   title: string;
   content: string;
   file_name: string;
+  style?: string;
   duration_minutes: number;
   duration_seconds?: number;
   created_at: string;
@@ -83,9 +84,39 @@ export interface VideoGeneration {
   id: string;
   segment_id: string;
   video_url?: string;
+  thumbnail_url?: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
+  is_representative?: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export type PageType = 'home' | 'script-generation' | 'voice-generation' | 'video-management' | 'avatar-management';
+export interface IntegratedContent {
+  id: string;
+  script_id: string;
+  title: string;
+  is_enabled: boolean;
+  audio_ready: boolean;
+  video_ready: boolean;
+  total_segments: number;
+  completed_segments: number;
+  final_video_url?: string;
+  streaming_status: 'pending' | 'processing' | 'completed' | 'failed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Conference {
+  conference_id: string;
+  conference_title: string;
+  conference_owner: string;
+  use_yn: boolean;
+  script_id?: string;
+  tts_id?: string;
+  total_segments: number;
+  video_ready: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PageType = 'home' | 'script-generation' | 'voice-generation' | 'video-management' | 'segment-video-management' | 'avatar-management' | 'integrated-management';

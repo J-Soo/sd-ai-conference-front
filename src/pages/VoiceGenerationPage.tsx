@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Pause, Download, Loader2, FileText, Clock, Calendar, Volume2, AlertCircle, Trash2, CheckSquare, Square, X } from 'lucide-react';
+import { Play, Pause, Download, Loader2, FileText, Clock, Calendar, Volume2, AlertCircle, Trash2, CheckSquare, Square, X } from 'lucide-react';
 import { Script, AudioGeneration } from '../types';
 import axios from 'axios';
 
@@ -13,7 +12,6 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
   darkMode,
   serverConnected
 }) => {
-  const navigate = useNavigate();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [audioGeneration, setAudioGeneration] = useState<AudioGeneration | null>(null);
@@ -412,25 +410,6 @@ const VoiceGenerationPage: React.FC<VoiceGenerationPageProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={() => navigate('/')}
-          className={`p-2 rounded-full transition-colors duration-200 ${
-            darkMode 
-              ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white' 
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800'
-          }`}
-          aria-label="홈으로 돌아가기"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h2 className="text-xl font-semibold">음성 관리</h2>
-          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            저장된 대본을 선택하여 TTS 음성을 생성하고 관리하세요
-          </p>
-        </div>
-      </div>
 
       {error && (
         <div className={`p-4 rounded-lg border ${darkMode ? 'bg-red-900/20 border-red-700 text-red-400' : 'bg-red-50 border-red-200 text-red-700'}`}>

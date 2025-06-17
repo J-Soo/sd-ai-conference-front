@@ -9,11 +9,11 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
-  // 메인 메뉴
+  // 생성 메뉴
   const mainMenuItems = [
     {
       id: 'script-generation' as PageType,
-      title: '대본 관리',
+      title: '대본 생성',
       description: 'PPT나 PDF 파일을 업로드하여 AI 기술로 발표 대본을 자동 생성하고 관리합니다',
       icon: FileText,
       color: 'blue',
@@ -21,7 +21,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
     },
     {
       id: 'voice-generation' as PageType,
-      title: '음성 관리',
+      title: '음성 생성',
       description: '생성된 대본을 바탕으로 자연스러운 TTS 음성 파일을 생성하고 관리합니다',
       icon: Mic,
       color: 'green',
@@ -29,7 +29,7 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
     },
     {
       id: 'video-management' as PageType,
-      title: '영상 관리',
+      title: '영상 생성',
       description: '대본 세그먼트별로 영상 생성 옵션을 설정하고 AI 영상을 생성합니다',
       icon: Video,
       color: 'purple',
@@ -37,8 +37,16 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
     }
   ];
 
-  // 서브 메뉴
+  // 관리 메뉴
   const subMenuItems = [
+    {
+      id: 'integrated-management' as PageType,
+      title: '컨퍼런스 관리',
+      description: '컨퍼런스를 생성하고 관리합니다',
+      icon: Sparkles,
+      color: 'rose',
+      features: ['컨퍼런스 생성', '대본/음성 선택', '사용 여부 설정', '영상 생성 관리']
+    },
     {
       id: 'avatar-management' as PageType,
       title: '아바타 관리',
@@ -46,6 +54,14 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
       icon: User,
       color: 'orange',
       features: ['아바타 등록', '이미지 업로드', '아바타 정보 관리', '아바타 삭제']
+    },
+    {
+      id: 'segment-video-management' as PageType,
+      title: '영상 관리',
+      description: '생성된 영상들을 세그먼트별로 확인하고 관리합니다',
+      icon: Video,
+      color: 'indigo',
+      features: ['영상 갤러리', '대표 영상 설정', '영상 미리보기', '영상 삭제']
     }
   ];
 
@@ -103,11 +119,11 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         </div>
       </div>
 
-      {/* 메인 메뉴 */}
+      {/* 생성 메뉴 */}
       <div className="space-y-4">
         <div className="flex items-center space-x-2 mb-6">
           <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-blue-500' : 'bg-blue-600'}`}></div>
-          <h3 className="text-xl font-bold">메인 메뉴</h3>
+          <h3 className="text-xl font-bold">생성 메뉴</h3>
         </div>
         <div className="flex flex-wrap gap-8 justify-start">
           {mainMenuItems.map((item) => (
@@ -126,11 +142,11 @@ const HomePage: React.FC<HomePageProps> = ({ darkMode, onNavigate }) => {
         </div>
       </div>
 
-      {/* 서브 메뉴 */}
+      {/* 관리 메뉴 */}
       <div className="space-y-4">
         <div className="flex items-center space-x-2 mb-6">
           <div className={`w-1 h-6 rounded-full ${darkMode ? 'bg-orange-500' : 'bg-orange-600'}`}></div>
-          <h3 className="text-xl font-bold">서브 메뉴</h3>
+          <h3 className="text-xl font-bold">관리 메뉴</h3>
         </div>
         <div className="flex flex-wrap gap-8 justify-start">
           {subMenuItems.map((item) => (

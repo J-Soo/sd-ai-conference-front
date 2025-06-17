@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import FileUploader from './FileUploader';
 import FileList from './FileList';
 import { FileInfo } from '../types';
-import { Upload, Volume2, Clock, TestTube } from 'lucide-react';
+import { Upload, Volume2, Timer, TestTube, FileText, Sparkles } from 'lucide-react';
 import axios from 'axios';
 
 // 기본 API 기본 URL (환경 변수나 자동 탐색으로 대체될 수 있음)
@@ -31,6 +31,17 @@ const FileManager: React.FC<FileManagerProps> = ({
   const [apiBaseUrl, setApiBaseUrl] = useState<string>(import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL);
   const [durationMinutes, setDurationMinutes] = useState<number>(3);
   const [durationSeconds, setDurationSeconds] = useState<number>(0);
+  const [style, setStyle] = useState<string>('professional');
+  const [customPrompt, setCustomPrompt] = useState<string>('');
+  const [loadingProgress, setLoadingProgress] = useState<number>(0);
+  const [loadingMessage, setLoadingMessage] = useState<string>('');
+  
+  // 기본 프롬프트 템플릿
+  const defaultPrompts = {
+    professional: '전문적이고 공식적인 어조로 발표 대본을 작성해주세요. 비즈니스 환경에 적합한 용어와 문체를 사용하여 신뢰성 있는 내용으로 구성해주세요.',
+    casual: '친근하고 편안한 어조로 발표 대본을 작성해주세요. 일상적인 언어를 사용하여 청중과의 거리감을 줄이고 친밀감을 형성할 수 있도록 해주세요.',
+    custom: customPrompt
+  };
 
   // 더미 응답 데이터
   const DUMMY_RESPONSES = [
@@ -163,15 +174,44 @@ const FileManager: React.FC<FileManagerProps> = ({
     }
   };
 
+  const handleDurationSecondsBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 0 && value < 60) {
+      // 10초 단위로 내림 처리
+      const roundedValue = Math.floor(value / 10) * 10;
+      setDurationSeconds(roundedValue);
+    }
+  };
+
+  const handleStyleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStyle(e.target.value);
+  };
+
+  const handleCustomPromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCustomPrompt(e.target.value);
+  };
+
   // 더미 데이터로 응답 시뮬레이션
   const simulateResponse = async () => {
     setIsLoading(true);
     setError(null);
+    setLoadingProgress(0);
 
     try {
-      // 2-4초 랜덤 로딩 시간
-      const loadingTime = Math.random() * 2000 + 2000;
-      await new Promise(resolve => setTimeout(resolve, loadingTime));
+      // 진행률 시뮬레이션
+      const steps = [
+        { progress: 10, message: '파일 업로드 중...' },
+        { progress: 30, message: '텍스트 추출 중...' },
+        { progress: 50, message: 'AI 대본 생성 중...' },
+        { progress: 80, message: '결과 검증 중...' },
+        { progress: 100, message: '완료!' }
+      ];
+
+      for (const step of steps) {
+        setLoadingProgress(step.progress);
+        setLoadingMessage(step.message);
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
       
       // 랜덤 더미 응답 선택
       const randomResponse = DUMMY_RESPONSES[Math.floor(Math.random() * DUMMY_RESPONSES.length)];
@@ -180,6 +220,7 @@ const FileManager: React.FC<FileManagerProps> = ({
       const fileInfo = files[0];
       const enhancedResponse = `[테스트 모드] 파일: ${fileInfo.name} (${fileInfo.size})
 발표 시간: ${durationMinutes}분 ${durationSeconds}초
+생성 스타일: ${style === 'professional' ? '전문적' : style === 'casual' ? '캐주얼' : '직접작성'}
 생성 시간: ${new Date().toLocaleString()}
 
 ========================================
@@ -225,6 +266,8 @@ ${randomResponse}
 
     setIsLoading(true);
     setError(null);
+    setLoadingProgress(10);
+    setLoadingMessage('파일 업로드 중...');
 
     try {
       // 첫 번째 파일을 기본 파일로 사용
@@ -233,7 +276,8 @@ ${randomResponse}
       // FormData 생성
       const formData = new FormData();
       formData.append('file', mainFile);
-      formData.append('style', 'professional'); // 기본 스타일
+      formData.append('style', style);
+      formData.append('custom_prompt', style === 'custom' ? customPrompt : defaultPrompts[style as keyof typeof defaultPrompts]);
       formData.append('language', 'ko'); // 기본 언어
       formData.append('duration_minutes', durationMinutes.toString()); // 발표 시간 (분)
       formData.append('duration_seconds', durationSeconds.toString()); // 발표 시간 (초)
@@ -241,6 +285,9 @@ ${randomResponse}
       console.log('API 호출:', `${apiBaseUrl}/scripts/generate`);
       console.log('파일 정보:', mainFile.name, mainFile.type, mainFile.size);
       console.log('발표 시간:', durationMinutes, '분', durationSeconds, '초');
+      
+      setLoadingProgress(30);
+      setLoadingMessage('대본 생성 요청 중...');
       
       // 대본 생성 요청 API 호출
       const response = await axios.post(
@@ -269,10 +316,18 @@ ${randomResponse}
       // 대본 생성이 완료될 때까지 상태 확인
       let isCompleted = false;
       let generationStatus = '';
+      let currentProgress = 50;
+      
+      setLoadingProgress(50);
+      setLoadingMessage('AI 대본 생성 중...');
       
       while (!isCompleted) {
         // 2초 대기
         await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // 진행률 점진적 증가
+        currentProgress = Math.min(currentProgress + 10, 90);
+        setLoadingProgress(currentProgress);
         
         // 상태 확인 API 호출
         const statusResponse = await axios.get(`${apiBaseUrl}/scripts/status/${generationId}`);
@@ -294,6 +349,9 @@ ${randomResponse}
       }
       
       // 작업이 완료된 경우 결과 가져오기
+      setLoadingProgress(100);
+      setLoadingMessage('완료!');
+      
       const resultResponse = await axios.get(`${apiBaseUrl}/scripts/result/${generationId}`);
       console.log('결과 응답:', resultResponse.data);
       
@@ -303,6 +361,8 @@ ${randomResponse}
       }
       
       setIsLoading(false);
+      setLoadingProgress(0);
+      setLoadingMessage('');
       
       // 대본 생성 완료 콜백 호출
       if (onScriptGenerated) {
@@ -329,91 +389,144 @@ ${randomResponse}
   };
 
   return (
-    <div className={`rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md h-full`}>
-      <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">파일 업로드</h2>
-          {!serverConnected && (
-            <div className="flex items-center space-x-2">
-              <TestTube className={`${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} size={16} />
-              <span className={`text-sm ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                테스트 모드
-              </span>
+    <div className="h-full flex flex-col">
+      {/* 스크롤 가능한 상단 영역 */}
+      <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+        {/* 파일 업로드 영역 */}
+        <div>
+          <h3 className="text-lg font-medium mb-3">파일 업로드</h3>
+          <FileUploader onFilesAdded={handleFilesAdded} darkMode={darkMode} />
+          
+          {error && (
+            <div className={`mt-4 p-3 rounded-md border ${
+              darkMode 
+                ? 'bg-red-900/20 border-red-700 text-red-400' 
+                : 'bg-red-100 border-red-200 text-red-700'
+            }`}>
+              {error}
             </div>
           )}
         </div>
-      </div>
-      <div className="p-6 h-[calc(100%-5rem)]">
-        <FileUploader onFilesAdded={handleFilesAdded} darkMode={darkMode} />
-        
-        {error && (
-          <div className="mt-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-md">
-            {error}
-          </div>
-        )}
-        
-        <div className="mt-8">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">업로드된 파일</h3>
-            <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              {files.length}개의 파일
-            </span>
-          </div>
           
+        {/* 업로드된 파일 영역 */}
+        <div>
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-lg font-medium">업로드된 파일</h3>
+          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            {files.length}개의 파일
+          </span>
+        </div>
+        
           <FileList files={files} onRemove={handleFileRemove} darkMode={darkMode} />
-          
-          <div className="mt-6">
-            <label className="block text-sm font-medium mb-2">
-              발표 시간
-            </label>
+        </div>
+            
+        {/* 발표 시간 영역 */}
+        <div>
+        <h3 className="text-lg font-medium mb-3">발표 시간</h3>
             <div className="flex space-x-4">
-              <div className="w-1/2">
-                <div className="flex items-center">
-                  <Clock className={`mr-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <Timer className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={18} />
                   <input
                     type="number"
                     min="0"
+                    step="1"
                     value={durationMinutes}
                     onChange={handleDurationChange}
-                    className={`w-20 p-2 rounded-md border ${
+                    className={`w-20 p-2 rounded-md border text-center font-medium ${
                       darkMode 
                         ? 'bg-gray-700 border-gray-600 text-gray-200' 
                         : 'bg-white border-gray-300 text-gray-800'
                     }`}
                   />
-                  <span className={`ml-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    분(기본값: 3분)
+                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    분
                   </span>
                 </div>
               </div>
               
-              <div className="w-1/2">
-                <div className="flex items-center">
-                  <Clock className={`mr-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <Timer className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={18} />
                   <input
                     type="number"
                     min="0"
                     max="59"
+                    step="10"
                     value={durationSeconds}
                     onChange={handleDurationSecondsChange}
-                    className={`w-20 p-2 rounded-md border ${
+                    onBlur={handleDurationSecondsBlur}
+                    className={`w-20 p-2 rounded-md border text-center font-medium ${
                       darkMode 
                         ? 'bg-gray-700 border-gray-600 text-gray-200' 
                         : 'bg-white border-gray-300 text-gray-800'
                     }`}
                   />
-                  <span className={`ml-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    초(0-59)
+                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    초
                   </span>
                 </div>
               </div>
             </div>
+          <p className={`mt-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            초는 10초 단위로 자동 조정됩니다
+          </p>
+        </div>
+
+        {/* 생성 옵션 영역 */}
+        <div className="flex-1 min-h-0">
+          <h3 className="text-lg font-medium mb-3">생성 옵션</h3>
+          <div className="space-y-4 h-full flex flex-col">
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  대본 스타일
+                </label>
+                <select
+                  value={style}
+                  onChange={handleStyleChange}
+                  className={`w-full p-2 rounded-md border ${
+                    darkMode 
+                      ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                      : 'bg-white border-gray-300 text-gray-800'
+                  }`}
+                >
+                  <option value="professional">전문적</option>
+                  <option value="casual">캐주얼</option>
+                  <option value="custom">직접 작성</option>
+                </select>
+              </div>
+              
+              <div className="flex-1 flex flex-col min-h-0">
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  생성 프롬프트
+                </label>
+                <textarea
+                  value={style === 'custom' ? customPrompt : defaultPrompts[style as keyof typeof defaultPrompts]}
+                  onChange={handleCustomPromptChange}
+                  disabled={style !== 'custom'}
+                  rows={6}
+                  className={`w-full p-3 rounded-md border resize-none flex-1 min-h-[180px] ${
+                    style === 'custom'
+                      ? darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                        : 'bg-white border-gray-300 text-gray-800'
+                      : darkMode 
+                        ? 'bg-gray-800 border-gray-700 text-gray-400 cursor-not-allowed' 
+                        : 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
+                  placeholder="직접 작성을 선택하면 프롬프트를 수정할 수 있습니다..."
+                  />
+                </div>
+              </div>
           </div>
-          
-          <button
-            onClick={handleSubmit}
-            disabled={isLoading || files.length === 0}
-            className={`mt-6 px-5 py-3 rounded-md w-full flex justify-center items-center space-x-2 font-medium transition-colors duration-200
+        </div>
+            
+      {/* 하단 고정 버튼 영역 */}
+      <div className="mt-6">
+        <button
+          onClick={handleSubmit}
+          disabled={isLoading || files.length === 0}
+          className={`px-5 py-3 rounded-md w-full flex justify-center items-center space-x-2 font-medium transition-colors duration-200
               ${isLoading 
                 ? `${darkMode ? 'bg-blue-700 text-gray-300' : 'bg-blue-400 text-white'} cursor-not-allowed` 
                 : files.length === 0
@@ -425,19 +538,50 @@ ${randomResponse}
               <>
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
                   <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 <span>{serverConnected ? '처리 중...' : '테스트 처리 중...'}</span>
               </>
             ) : (
               <>
-                <Upload size={18} />
-                <span>{serverConnected ? '대본 생성' : '대본 생성(테스트)'}</span>
+                <Sparkles size={18} />
+                <span>{serverConnected ? 'AI 대본 생성' : 'AI 대본 생성(테스트)'}</span>
               </>
             )}
-          </button>
-        </div>
+        </button>
       </div>
+
+      {/* 로딩 오버레이 */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`p-8 rounded-lg max-w-md w-full mx-4 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="text-center">
+              <div className="mb-4">
+                <Sparkles className={`mx-auto animate-pulse ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={48} />
+              </div>
+              <h3 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                AI 대본 생성 중
+              </h3>
+              <p className={`text-sm mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {loadingMessage}
+              </p>
+              
+              {/* 진행률 바 */}
+              <div className={`w-full rounded-full h-2 mb-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                <div 
+                  className={`h-2 rounded-full transition-all duration-500 ${darkMode ? 'bg-blue-500' : 'bg-blue-600'}`}
+                  style={{ width: `${loadingProgress}%` }}
+                ></div>
+              </div>
+              
+              {/* 퍼센테이지 */}
+              <p className={`text-lg font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                {loadingProgress}%
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
