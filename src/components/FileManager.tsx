@@ -490,6 +490,9 @@ ${randomResponse}
                 <option value="casual">캐주얼</option>
                 <option value="custom">직접 작성</option>
               </select>
+              <p className={`mt-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                대본의 어조와 표현 스타일을 결정합니다
+              </p>
             </div>
           </div>
         </div>
