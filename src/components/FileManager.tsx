@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import FileUploader from './FileUploader';
-import FileList from './FileList';
+import UnifiedFileManager from './UnifiedFileManager';
 import { FileInfo } from '../types';
-import { Upload, Volume2, Timer, TestTube, FileText, Sparkles } from 'lucide-react';
+import { Timer, TestTube, Sparkles, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
 // 기본 API 기본 URL (환경 변수나 자동 탐색으로 대체될 수 있음)
@@ -392,10 +391,15 @@ ${randomResponse}
     <div className="h-full flex flex-col">
       {/* 스크롤 가능한 상단 영역 */}
       <div className="flex-1 overflow-y-auto space-y-6 pr-2">
-        {/* 파일 업로드 영역 */}
+        {/* 통합 파일 관리 영역 */}
         <div>
           <h3 className="text-lg font-medium mb-3">파일 업로드</h3>
-          <FileUploader onFilesAdded={handleFilesAdded} darkMode={darkMode} />
+          <UnifiedFileManager
+            files={files}
+            onFilesAdded={handleFilesAdded}
+            onFileRemove={handleFileRemove}
+            darkMode={darkMode}
+          />
           
           {error && (
             <div className={`mt-4 p-3 rounded-md border ${
@@ -406,18 +410,6 @@ ${randomResponse}
               {error}
             </div>
           )}
-        </div>
-          
-        {/* 업로드된 파일 영역 */}
-        <div>
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-medium">업로드된 파일</h3>
-          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            {files.length}개의 파일
-          </span>
-        </div>
-        
-          <FileList files={files} onRemove={handleFileRemove} darkMode={darkMode} />
         </div>
             
         {/* 발표 시간 영역 */}
@@ -536,8 +528,8 @@ ${randomResponse}
           >
             {isLoading ? (
               <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
-                  <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 <span>{serverConnected ? '처리 중...' : '테스트 처리 중...'}</span>
